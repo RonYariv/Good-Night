@@ -1,21 +1,19 @@
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import './App.css'
 import { Lobby } from './Lobby'
+import { RoomPage } from './RoomPage'
 
 function App() {
 
   return (
-    <div className="lobby-wrapper">
-      <Lobby
-    onCreateRoom={(roomName) => {
-      console.log('Create room:', roomName);
-      // Call your backend here
-    }}
-    onJoinRoom={(roomId) => {
-      console.log('Join room:', roomId);
-      // Call your backend here
-    }}
-  />
-  </div>
+    <>
+     <Router>
+      <Routes>
+        <Route path="/" element={<Lobby />} />
+        <Route path="/room/:gameCode" element={<RoomPage />} />
+      </Routes>
+    </Router>
+  </>
   )
 }
 

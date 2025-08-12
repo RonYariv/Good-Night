@@ -19,6 +19,10 @@ class SocketService {
     this.socket.on(event, callback);
   }
 
+  once(event: string, callback: (...args: any[]) => void) {
+    this.socket.once(event, callback);
+  }
+
   off(event: string, callback?: (...args: any[]) => void) {
     this.socket.off(event, callback);
   }

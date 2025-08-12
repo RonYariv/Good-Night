@@ -1,68 +1,38 @@
-import { useEffect, useState } from 'react';
-import { socketService } from './services/socket.service';
-import './Lobby.css';
-
-interface Room {
-  id: string;
-  gameCode: string;
-  name: string;
-  players: { id: string; name: string }[];
-  status: string;
-}
-
-const RoomEvents = {
-  CreateRoom: 'createRoom',
-  RoomCreated: 'roomCreated',
-  JoinRoom: 'joinRoom',
-  LeaveRoom: 'leaveRoom',
-  GetRooms: 'getRooms',
-  PlayerJoined: 'playerJoined',
-  PlayerLeft: 'playerLeft',
-  PlayerAction: 'PlayerAction',
-  RoomList: 'roomList',
-  RoomListUpdated: 'roomListUpdated',
-  StartGame: 'startGame',
-  EndGame: 'endGame',
-  GameStarted: 'gameStarted',
-  GameEnded: 'gameEnded',
-  CurrentPlayerTurn: 'CurrentPlayerTurn',
-  Error: 'error',
-} as const;
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { socketService } from "./services/socket.service";
+import "./Lobby.css";
 
 export function Lobby() {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [roomName, setRoomName] = useState('');
-  const [playerName, setPlayerName] = useState('');
-  const [joinRoomId, setJoinRoomId] = useState('');
+  const [roomName, setRoomName] = useState("");
+  const [playerName, setPlayerName] = useState("");
+  const [joinRoomId, setJoinRoomId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     socketService.connect();
-
-    socketService.on(RoomEvents.RoomListUpdated, () => {
-      // update rooms list from backend if sent here
-    });
-
-    return () => {
-      socketService.disconnect();
-    };
+    return () => socketService.disconnect();
   }, []);
 
   const createRoom = () => {
-    if (!roomName) return setError('Room name is required');
-    socketService.emit(RoomEvents.CreateRoom, { name: roomName });
-    socketService.on(RoomEvents.RoomCreated, (room: Room) => {
-      setRooms((prev) => [...prev, room]);
+    if (!roomName) return setError("Room name is required");
+
+    socketService.emit("createRoom", { name: roomName });
+    socketService.once("roomCreated", (room) => {
       setError(null);
+      navigate(`/room/${room.gameCode}`);
     });
   };
 
   const joinRoom = () => {
-    if (!playerName || !joinRoomId) return setError('Player name and room ID are required');
-    socketService.emit(RoomEvents.JoinRoom, { roomId: joinRoomId, playerName });
-    socketService.on(RoomEvents.PlayerJoined, ({room}) => {
-      // TODO
+    if (!playerName || !joinRoomId)
+      return setError("Player name and room ID are required");
+
+    socketService.emit("joinRoom", { roomId: joinRoomId, playerName });
+    socketService.once("playerJoined", ({ room }) => {
       setError(null);
+      navigate(`/room/${room.gameCode}`);
     });
   };
 

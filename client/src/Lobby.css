@@ -3,9 +3,9 @@
   height: 92%;
   margin: 3rem auto;
   padding: 2rem;
-  background-color: #1e1e1e; /* dark gray, solid */
+  background-color: #1e1e1e;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
-  color: #ccc; /* light gray text */
+  color: #ccc;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   flex-direction: column;

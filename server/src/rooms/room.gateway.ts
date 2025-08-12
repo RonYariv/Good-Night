@@ -6,25 +6,42 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Namespace, Server, Socket } from 'socket.io';
+import { instrument } from '@socket.io/admin-ui';
 import { RoomEvents, ChatEvents } from '../shared/events';
 import { RoomService } from './room.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameManagementService } from './gameManagment.service';
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: {
+    origin: ['*', 'https://admin.socket.io'],
+    credentials: true,
+  },
   namespace: '/rooms',
 })
-export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private readonly roomService: RoomService, private readonly gameManagmentService : GameManagementService) {}
+export class RoomGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
+  constructor(
+    private readonly roomService: RoomService,
+    private readonly gameManagmentService: GameManagementService,
+  ) {}
 
   @WebSocketServer()
   server: Server;
 
   private roomIdToMessages: Map<string, IChatMessage[]> = new Map();
   private maxHistoryPerRoom = 100;
+
+  afterInit(nameSpace: Namespace) {
+    instrument(nameSpace.server, {
+    auth: false,
+    mode: 'production',
+    });
+}
 
   // Connection handling
   handleConnection(client: Socket) {
@@ -74,6 +91,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.emit(RoomEvents.RoomListUpdated);
       return { success: true, room };
     } catch (error: any) {
+      console.log(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }
