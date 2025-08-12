@@ -1,125 +1,111 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { socketService } from './services/socket.service';
+import './Lobby.css';
 
-interface LobbyProps {
-  onCreateRoom: (roomName: string) => void;
-  onJoinRoom: (roomId: string) => void;
+interface Room {
+  id: string;
+  gameCode: string;
+  name: string;
+  players: { id: string; name: string }[];
+  status: string;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ onCreateRoom, onJoinRoom }) => {
-  const [createRoomName, setCreateRoomName] = useState('');
+const RoomEvents = {
+  CreateRoom: 'createRoom',
+  RoomCreated: 'roomCreated',
+  JoinRoom: 'joinRoom',
+  LeaveRoom: 'leaveRoom',
+  GetRooms: 'getRooms',
+  PlayerJoined: 'playerJoined',
+  PlayerLeft: 'playerLeft',
+  PlayerAction: 'PlayerAction',
+  RoomList: 'roomList',
+  RoomListUpdated: 'roomListUpdated',
+  StartGame: 'startGame',
+  EndGame: 'endGame',
+  GameStarted: 'gameStarted',
+  GameEnded: 'gameEnded',
+  CurrentPlayerTurn: 'CurrentPlayerTurn',
+  Error: 'error',
+} as const;
+
+export function Lobby() {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomName, setRoomName] = useState('');
+  const [playerName, setPlayerName] = useState('');
   const [joinRoomId, setJoinRoomId] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    socketService.connect();
+
+    socketService.on(RoomEvents.RoomListUpdated, () => {
+      // update rooms list from backend if sent here
+    });
+
+    return () => {
+      socketService.disconnect();
+    };
+  }, []);
+
+  const createRoom = () => {
+    if (!roomName) return setError('Room name is required');
+    socketService.emit(RoomEvents.CreateRoom, { name: roomName });
+    socketService.on(RoomEvents.RoomCreated, (room: Room) => {
+      setRooms((prev) => [...prev, room]);
+      setError(null);
+    });
+  };
+
+  const joinRoom = () => {
+    if (!playerName || !joinRoomId) return setError('Player name and room ID are required');
+    socketService.emit(RoomEvents.JoinRoom, { roomId: joinRoomId, playerName });
+    socketService.on(RoomEvents.PlayerJoined, ({room}) => {
+      // TODO
+      setError(null);
+    });
+  };
 
   return (
-    <div style={styles.page}>
-      <h1 style={styles.title}>The Dark Lobby</h1>
+    <div className="lobby-container">
+      <h1 className="lobby-title">The Dark Lobby</h1>
 
-      <div style={styles.card}>
-        <h2 style={styles.subtitle}>Create New Room</h2>
+      <section className="lobby-section">
+        <h2 className="section-title">Create Room</h2>
         <input
           type="text"
-          placeholder="Enter room name"
-          value={createRoomName}
-          onChange={e => setCreateRoomName(e.target.value)}
-          style={styles.input}
+          placeholder="Room name"
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+          className="input-field"
         />
-        <button
-          style={styles.button}
-          disabled={!createRoomName.trim()}
-          onClick={() => {
-            onCreateRoom(createRoomName.trim());
-            setCreateRoomName('');
-          }}
-        >
-          Summon Room
+        <button onClick={createRoom} className="btn btn-create">
+          Create
         </button>
-      </div>
+      </section>
 
-      <div style={styles.card}>
-        <h2 style={styles.subtitle}>Join Existing Room</h2>
+      <section className="lobby-section">
+        <h2 className="section-title">Join Room</h2>
         <input
           type="text"
-          placeholder="Enter room ID"
+          placeholder="Room ID"
           value={joinRoomId}
-          onChange={e => setJoinRoomId(e.target.value)}
-          style={styles.input}
+          onChange={(e) => setJoinRoomId(e.target.value)}
+          className="input-field"
         />
-        <button
-          style={styles.button}
-          disabled={!joinRoomId.trim()}
-          onClick={() => {
-            onJoinRoom(joinRoomId.trim());
-            setJoinRoomId('');
-          }}
-        >
-          Enter Shadows
+        <input
+          type="text"
+          placeholder="Player name"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          className="input-field"
+        />
+        <button onClick={joinRoom} className="btn btn-join">
+          Join
         </button>
-      </div>
+      </section>
+
+      {error && <p className="error-text">{error}</p>}
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    width: '100%',
-    height: '100%',
-    minHeight: '100vh',
-    background:
-      'linear-gradient(135deg, #0d0d18 0%, #1a1a2e 40%, #2b2b42 100%)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 40,
-    padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    color: '#eee',
-  },
-  title: {
-    fontSize: '3rem',
-    fontWeight: '900',
-    letterSpacing: '0.15em',
-    textShadow: '0 0 8px #8e44ad',
-    marginBottom: '2rem',
-    userSelect: 'none',
-  },
-  card: {
-    backgroundColor: '#121224',
-    borderRadius: 12,
-    padding: '2rem',
-    width: 320,
-    boxShadow:
-      '0 0 10px 1px rgba(142, 68, 173, 0.8), inset 0 0 8px 1px #440066',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-  },
-  subtitle: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: '#bb86fc',
-    userSelect: 'none',
-  },
-  input: {
-    padding: '0.75rem 1rem',
-    borderRadius: 6,
-    border: 'none',
-    outline: 'none',
-    fontSize: '1rem',
-    backgroundColor: '#2a2244',
-    color: '#ddd',
-    boxShadow: 'inset 0 0 6px #440066',
-    transition: 'background-color 0.3s',
-  },
-  button: {
-    backgroundColor: '#8e44ad',
-    border: 'none',
-    borderRadius: 6,
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: '1rem',
-    padding: '0.75rem',
-    cursor: 'pointer',
-    userSelect: 'none',
-    transition: 'background-color 0.3s',
-  },
-};
+}

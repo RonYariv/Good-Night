@@ -9,7 +9,6 @@ export interface IRoom {
     maxPlayers: number;
     currentPlayers: number;
     gameCode: string;
-    url: string;
     status: RoomStatus;
     players: IPlayer[];
     isPrivate: boolean;

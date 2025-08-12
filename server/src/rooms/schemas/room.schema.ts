@@ -6,11 +6,11 @@ export type RoomDocument = Room & Document;
 
 @Schema({ timestamps: true })
 export class Room {
-  @Prop({ required: true, unique: true })
-  id: string;
-
   @Prop({ required: true })
   name: string;
+
+  @Prop({ required: true })
+  gameCode: string;
 
   @Prop({ required: true })
   host: string; // host player id
@@ -20,12 +20,6 @@ export class Room {
 
   @Prop({ default: 0 })
   currentPlayers: number;
-
-  @Prop({ required: true })
-  gameCode: string;
-
-  @Prop({ required: true, unique: true })
-  url: string;
 
   @Prop({ default: 'waiting' })
   status: 'waiting' | 'playing' | 'finished';
@@ -41,3 +35,19 @@ export class Room {
 }
 
 export const RoomSchema = SchemaFactory.createForClass(Room);
+RoomSchema.virtual('id').get(function () {
+  return this._id.toString();
+});
+
+// Enable virtuals in toJSON and toObject output:
+RoomSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,   // optionally hide __v
+  transform: function (doc, ret) {
+    delete ret._id; // optionally remove _id as well
+  },
+});
+
+RoomSchema.set('toObject', {
+  virtuals: true,
+});

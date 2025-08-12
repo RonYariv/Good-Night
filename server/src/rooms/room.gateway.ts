@@ -43,11 +43,12 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const room = await this.roomService.createRoom(createRoomDto);
-      client.join(room.id);
+      client.join(room.gameCode);
       client.emit(RoomEvents.RoomCreated, room);
       this.server.emit(RoomEvents.RoomListUpdated);
       return { success: true, room };
     } catch (error: any) {
+      console.log(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }

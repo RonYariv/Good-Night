@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Room, RoomDocument } from './schemas/room.schema';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { RoomStatus } from '../shared/interfaces/room.interface';
+import { IRoom, RoomStatus } from '../shared/interfaces/room.interface';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -13,26 +13,39 @@ export class RoomService {
   ) {}
 
   async createRoom(createRoomDto: CreateRoomDto): Promise<RoomDocument> {
-    const room = new this.roomModel({
+    const room: RoomDocument = new this.roomModel({
       ...createRoomDto,
+      host : "Player 1",
+      gameCode : this.generateGameCode(),
+      maxPlayers: 6,
       currentPlayers: 1,
-      players: [createRoomDto.host],
+      players: [],
       status: 'waiting',
     });
     return room.save();
+  }
+
+  generateGameCode(length = 6): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * chars.length);
+      result += chars[randomIndex];
+    }
+    return result;
   }
 
   async getAllRooms(): Promise<RoomDocument[]> {
     return this.roomModel.find({ isPrivate: false, status: 'waiting' }).exec();
   }
 
-  async getRoomById(id: string): Promise<RoomDocument> {
-    const room = await this.roomModel.findById(id).exec();
+  async getRoomByGameCode(gameCode: string): Promise<RoomDocument> {
+    const room = await this.roomModel.findOne({ gameCode, status: 'waiting' }).exec();
     if (!room) {
       throw new NotFoundException('Room not found');
     }
     return room;
-  }
+}
 
   async getRoomByUrl(url: string): Promise<RoomDocument> {
     const room = await this.roomModel.findOne({ url }).exec();
@@ -43,7 +56,7 @@ export class RoomService {
   }
 
   async joinRoom(roomId: string, playerName: string): Promise<RoomDocument> {
-    const room = await this.getRoomById(roomId);
+    const room = await this.getRoomByGameCode(roomId);
     
     if (room.status !== 'waiting') {
       throw new BadRequestException('Game has already started');
@@ -60,7 +73,7 @@ export class RoomService {
   }
 
   async leaveRoom(roomId: string, playerId: string): Promise<RoomDocument> {
-    const room = await this.getRoomById(roomId);
+    const room = await this.getRoomByGameCode(roomId);
     
     if (!room.players.some(player => player.id === playerId)) {
       throw new BadRequestException('Player not in room');
@@ -84,7 +97,7 @@ export class RoomService {
   }
 
   async updateRoomStatus(roomId: string, status: RoomStatus): Promise<RoomDocument> {
-    const room = await this.getRoomById(roomId);
+    const room = await this.getRoomByGameCode(roomId);
     room.status = status;
     return room.save();
   }
