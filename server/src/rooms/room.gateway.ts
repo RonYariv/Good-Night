@@ -17,7 +17,7 @@ import { GameManagementService } from './gameManagment.service';
 
 @WebSocketGateway({
   cors: {
-    origin: ['*', 'https://admin.socket.io'],
+    origin: ['http://localhost:5173', 'https://admin.socket.io'],
     credentials: true,
   },
   namespace: '/rooms',
