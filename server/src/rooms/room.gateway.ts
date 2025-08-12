@@ -97,6 +97,32 @@ export class RoomGateway
     }
   }
 
+  @SubscribeMessage(RoomEvents.RoomByGameCode)
+  async handleGetRoomByGameCode(
+    @MessageBody() data: { gameCode: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const { gameCode } = data;
+      client.join(gameCode);
+
+      // Fetch the room data from your RoomService
+      const room = await this.roomService.getRoomByGameCode(gameCode);
+      if (!room) {
+        client.emit(RoomEvents.Error, { message: 'Room not found' });
+        return { success: false, error: 'Room not found' };
+      }
+
+      client.emit(RoomEvents.RoomData, room);
+
+      return { success: true, room };
+    } catch (error: any) {
+      client.emit(RoomEvents.Error, { message: error.message });
+      return { success: false, error: error.message };
+    }
+}
+
+
   @SubscribeMessage(RoomEvents.LeaveRoom)
   async handleLeaveRoom(
     @MessageBody() data: { roomId: string; playerId: string },

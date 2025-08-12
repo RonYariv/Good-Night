@@ -9,6 +9,8 @@ export enum RoomEvents {
   PlayerAction = 'PlayerAction',
   RoomList = 'roomList',
   RoomListUpdated = 'roomListUpdated',
+  RoomByGameCode = 'roomByGameCode',
+  RoomData = 'roomData',
   StartGame = 'startGame',
   EndGame = 'endGame',
   GameStarted = 'gameStarted',

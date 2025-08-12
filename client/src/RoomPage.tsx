@@ -16,7 +16,11 @@ export function RoomPage() {
   useEffect(() => {
     socketService.connect();
 
-    //socketService.emit("getRoomByGameCode", { gameCode });
+    socketService.emit("roomByGameCode", { gameCode });
+
+    socketService.on("roomData", (room) => {
+      setPlayers(room.players);
+    });
 
     socketService.on("playerJoined", ({ room }) => {
         console.log("player joined", room);
