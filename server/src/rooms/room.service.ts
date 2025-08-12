@@ -55,7 +55,7 @@ export class RoomService {
     return room;
   }
 
-  async joinRoom(roomId: string, playerName: string): Promise<RoomDocument> {
+  async joinRoom(roomId: string, playerName: string): Promise<{ room: Promise<RoomDocument>; id: string; }> {
     const room = await this.getRoomByGameCode(roomId);
     
     if (room.status !== 'waiting') {
@@ -69,7 +69,7 @@ export class RoomService {
     room.players.push({ id, name: playerName, currentRole: null, roleHistory: [] });
     room.currentPlayers += 1;
     
-    return room.save();
+    return {room : room.save(), id };
   }
 
   async leaveRoom(roomId: string, playerId: string): Promise<RoomDocument> {

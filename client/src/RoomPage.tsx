@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { socketService } from "./services/socket.service";
 import "./RoomPage.css";
 
@@ -9,6 +9,8 @@ interface Player {
 }
 
 export function RoomPage() {
+  const location = useLocation();
+  const playerId = location.state?.playerId || null;
   const { gameCode } = useParams<{ gameCode: string }>();
   const [players, setPlayers] = useState<Player[]>([]);
   const [copied, setCopied] = useState(false);
@@ -65,6 +67,19 @@ export function RoomPage() {
                 </button>
             </div>
       </header>
+
+          <button
+              onClick={() => {
+                if (playerId && gameCode) {
+                  socketService.emit("leaveRoom", { roomId: gameCode, playerId });
+                  // redirect logic here, e.g., navigate('/')
+                }
+              }}
+              className="btn btn-leave"
+              type="button"
+            >
+              Leave Room
+          </button>
 
       <section className="players-section">
         <h2 className="section-title">Players ({players.length})</h2>

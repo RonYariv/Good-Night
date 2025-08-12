@@ -30,9 +30,10 @@ export function Lobby() {
       return setError("Player name and room ID are required");
 
     socketService.emit("joinRoom", { roomId: joinRoomId, playerName });
-    socketService.once("playerJoined", ({ room }) => {
+    socketService.once("playerJoined", ({ room, playerId }) => {
+      console.log("Player joined room:", room);
       setError(null);
-      navigate(`/room/${room.gameCode}`);
+      navigate(`/room/${room.gameCode}`, { state: { playerId: playerId } });
     });
   };
 

@@ -132,3 +132,21 @@
   color: green;
   font-size: 0.9rem;
 }
+
+.btn-leave {
+  max-width: 100px;
+  background-color: transparent;
+  color: #e57373; /* soft red */
+  border: 1px solid #e57373;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin: 1rem 0;
+}
+
+.btn-leave:hover {
+  background-color: #e57373;
+  color: white;
+}

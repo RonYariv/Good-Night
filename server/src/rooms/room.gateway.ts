@@ -77,16 +77,19 @@ export class RoomGateway
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const room = await this.roomService.joinRoom(data.roomId, data.playerName);
+      const result = await this.roomService.joinRoom(data.roomId, data.playerName);
       client.join(data.roomId);
+
+      const room = await result.room;
+      const id = result.id;
 
       // Send chat history
       const history = this.roomIdToMessages.get(data.roomId) ?? [];
       client.emit(ChatEvents.History, history);
 
       this.server.to(data.roomId).emit(RoomEvents.PlayerJoined, {
-        playerName: data.playerName,
         room,
+        playerId: id
       });
       this.server.emit(RoomEvents.RoomListUpdated);
       return { success: true, room };
@@ -129,7 +132,7 @@ export class RoomGateway
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const room = this.roomService.leaveRoom(data.roomId, data.playerId);
+      const room = await this.roomService.leaveRoom(data.roomId, data.playerId);
       client.leave(data.roomId);
       this.server.to(data.roomId).emit(RoomEvents.PlayerLeft, {
         playerId: data.playerId,
