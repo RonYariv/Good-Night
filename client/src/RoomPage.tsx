@@ -18,7 +18,6 @@ export function RoomPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [copied, setCopied] = useState(false);
 
-  // Chat state
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [messageText, setMessageText] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -28,27 +27,22 @@ export function RoomPage() {
 
     socketService.emit(RoomEvents.RoomByGameCode, { gameCode });
 
-    socketService.on(RoomEvents.RoomData, (room) => {
-      setPlayers(room.players);
-    });
+    const handlers: [string, (data: any) => void][] = [
+      [RoomEvents.RoomData, (room) => setPlayers(room.players)],
+      [RoomEvents.PlayerJoined, ({ room }) => setPlayers(room.players)],
+      [RoomEvents.PlayerLeft, ({ room }) => setPlayers(room.players)],
+      [ChatEvents.History, (history: IChatMessage[]) => setMessages(history)],
+      [ChatEvents.NewMessage, (message: IChatMessage) =>
+        setMessages((prev) => [...prev, message])
+      ],
+    ];
 
-    socketService.on(RoomEvents.PlayerJoined, ({ room }) => {
-      setPlayers(room.players);
-    });
-
-    socketService.on(RoomEvents.PlayerLeft, ({ room }) => {
-      setPlayers(room.players);
-    });
-
-    socketService.on(ChatEvents.History, (history: IChatMessage[]) => {
-      setMessages(history);
-    });
-
-    socketService.on(ChatEvents.NewMessage, (message: IChatMessage) => {
-      setMessages((prev) => [...prev, message]);
-    });
+    handlers.forEach(([event, handler]) => socketService.on(event, handler));
 
     return () => {
+      handlers.forEach(([event, handler]) =>
+        socketService.off(event, handler)
+      );
       socketService.disconnect();
     };
   }, [gameCode]);

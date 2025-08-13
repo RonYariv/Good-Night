@@ -7,13 +7,13 @@ function App() {
 
   return (
     <>
-     <Router>
-      <Routes>
-        <Route path="/" element={<Lobby />} />
-        <Route path="/room/:gameCode" element={<RoomPage />} />
-      </Routes>
-    </Router>
-  </>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Lobby />} />
+          <Route path="/room/:gameCode" element={<RoomPage />} />
+        </Routes>
+      </Router>
+    </>
   )
 }
 
