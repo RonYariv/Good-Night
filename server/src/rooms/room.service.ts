@@ -5,6 +5,7 @@ import { Room, RoomDocument } from './schemas/room.schema';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { IRoom, RoomStatus } from '../shared/interfaces/room.interface';
 import { randomUUID } from 'crypto';
+import { IPlayer } from 'src/shared/interfaces/player.interface';
 
 @Injectable()
 export class RoomService {
@@ -13,13 +14,14 @@ export class RoomService {
   ) {}
 
   async createRoom(createRoomDto: CreateRoomDto): Promise<RoomDocument> {
+    const host : IPlayer = {id: randomUUID(), name: "host", currentRole: null, roleHistory: null };
     const room: RoomDocument = new this.roomModel({
       ...createRoomDto,
-      host : "Player 1",
+      host : host.id,
       gameCode : this.generateGameCode(),
       maxPlayers: 6,
       currentPlayers: 1,
-      players: [],
+      players: [host],
       status: 'waiting',
     });
     return room.save();
@@ -46,14 +48,6 @@ export class RoomService {
     }
     return room;
 }
-
-  async getRoomByUrl(url: string): Promise<RoomDocument> {
-    const room = await this.roomModel.findOne({ url }).exec();
-    if (!room) {
-      throw new NotFoundException('Room not found');
-    }
-    return room;
-  }
 
   async joinRoom(roomId: string, playerName: string): Promise<{ room: Promise<RoomDocument>; id: string; }> {
     const room = await this.getRoomByGameCode(roomId);

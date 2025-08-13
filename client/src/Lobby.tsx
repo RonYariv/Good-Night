@@ -21,7 +21,7 @@ export function Lobby() {
     socketService.emit("createRoom", { name: roomName });
     socketService.once("roomCreated", (room) => {
       setError(null);
-      navigate(`/room/${room.gameCode}`);
+      navigate(`/room/${room.gameCode}`, { state: { playerId: room.host } });
     });
   };
 
@@ -31,7 +31,8 @@ export function Lobby() {
 
     socketService.emit("joinRoom", { roomId: joinRoomId, playerName });
     socketService.once("playerJoined", ({ room, playerId }) => {
-      console.log("Player joined room:", room);
+      console.log("heloooooo")
+      console.log("Player joined room:", playerId);
       setError(null);
       navigate(`/room/${room.gameCode}`, { state: { playerId: playerId } });
     });

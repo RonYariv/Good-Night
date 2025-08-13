@@ -9,6 +9,6 @@ export interface IPlayerRoleHistoryItem {
     id: string;
     name: string;
     currentRole: IRole | null;
-    roleHistory: IPlayerRoleHistoryItem[];
+    roleHistory: IPlayerRoleHistoryItem[] | null;
   }
   
