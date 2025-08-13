@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { ChatEvents, RoomEvents, RoleEvents, PlayerEvents } from '../shared/events';
+import { ChatEvents, RoomEvents, RoleEvents, PlayerEvents } from '@myorg/shared';
 
 @ApiTags('ws')
 @Controller('ws-docs')

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { instrument } from '@socket.io/admin-ui';
 import { Namespace, Server, Socket } from 'socket.io';
-import { ChatEvents, RoomEvents } from '../shared/events';
+import { ChatEvents, RoomEvents, IChatMessage } from '@myorg/shared';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameManagementService } from './gameManagment.service';
 import { RoomService } from './room.service';

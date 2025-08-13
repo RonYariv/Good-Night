@@ -1,0 +1,54 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PlayerEvents = exports.RoleEvents = exports.ChatEvents = exports.RoomEvents = void 0;
+var RoomEvents;
+(function (RoomEvents) {
+    RoomEvents["CreateRoom"] = "createRoom";
+    RoomEvents["RoomCreated"] = "roomCreated";
+    RoomEvents["JoinRoom"] = "joinRoom";
+    RoomEvents["LeaveRoom"] = "leaveRoom";
+    RoomEvents["GetRooms"] = "getRooms";
+    RoomEvents["PlayerJoined"] = "playerJoined";
+    RoomEvents["PlayerLeft"] = "playerLeft";
+    RoomEvents["PlayerAction"] = "PlayerAction";
+    RoomEvents["RoomList"] = "roomList";
+    RoomEvents["RoomListUpdated"] = "roomListUpdated";
+    RoomEvents["RoomByGameCode"] = "roomByGameCode";
+    RoomEvents["RoomData"] = "roomData";
+    RoomEvents["StartGame"] = "startGame";
+    RoomEvents["EndGame"] = "endGame";
+    RoomEvents["GameStarted"] = "gameStarted";
+    RoomEvents["GameEnded"] = "gameEnded";
+    RoomEvents["CurrentPlayerTurn"] = "CurrentPlayerTurn";
+    RoomEvents["Error"] = "error";
+})(RoomEvents || (exports.RoomEvents = RoomEvents = {}));
+var ChatEvents;
+(function (ChatEvents) {
+    ChatEvents["Join"] = "chat:join";
+    ChatEvents["Leave"] = "chat:leave";
+    ChatEvents["Send"] = "chat:send";
+    ChatEvents["NewMessage"] = "chat:new";
+    ChatEvents["History"] = "chat:history";
+    ChatEvents["Error"] = "chat:error";
+})(ChatEvents || (exports.ChatEvents = ChatEvents = {}));
+var RoleEvents;
+(function (RoleEvents) {
+    RoleEvents["Create"] = "role:create";
+    RoleEvents["List"] = "role:list";
+    RoleEvents["Update"] = "role:update";
+    RoleEvents["Delete"] = "role:delete";
+    RoleEvents["Created"] = "role:created";
+    RoleEvents["Updated"] = "role:updated";
+    RoleEvents["Deleted"] = "role:deleted";
+    RoleEvents["Error"] = "role:error";
+})(RoleEvents || (exports.RoleEvents = RoleEvents = {}));
+var PlayerEvents;
+(function (PlayerEvents) {
+    PlayerEvents["Create"] = "player:create";
+    PlayerEvents["List"] = "player:list";
+    PlayerEvents["Get"] = "player:get";
+    PlayerEvents["SetRole"] = "player:setRole";
+    PlayerEvents["Created"] = "player:created";
+    PlayerEvents["Updated"] = "player:updated";
+    PlayerEvents["Error"] = "player:error";
+})(PlayerEvents || (exports.PlayerEvents = PlayerEvents = {}));

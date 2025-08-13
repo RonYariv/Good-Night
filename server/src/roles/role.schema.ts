@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { WinCondition } from '../shared/enums/winCondition.enum';
+import { WinCondition } from '@myorg/shared';
 
 @Schema({ timestamps: true })
 export class Role {

@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role, RoleDocument } from './role.schema';
 import { randomUUID } from 'crypto';
-import { WinCondition } from '../shared/enums/winCondition.enum';
+import { WinCondition } from '@myorg/shared';
 
 @Injectable()
 export class RoleService {

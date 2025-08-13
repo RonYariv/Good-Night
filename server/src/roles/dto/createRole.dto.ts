@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { WinCondition } from '../../shared/enums/winCondition.enum';
+import { WinCondition } from '@myorg/shared';
 
 export class CreateRoleDto {
   @ApiProperty({ example: 'Detective' })

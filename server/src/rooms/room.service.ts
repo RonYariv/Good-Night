@@ -3,9 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Room, RoomDocument } from './schemas/room.schema';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { IRoom, RoomStatus } from '../shared/interfaces/room.interface';
+import { IRoom, RoomStatus, IPlayer } from '@myorg/shared';
 import { randomUUID } from 'crypto';
-import { IPlayer } from 'src/shared/interfaces/player.interface';
 
 @Injectable()
 export class RoomService {

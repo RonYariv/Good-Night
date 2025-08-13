@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IPlayer } from '../shared/interfaces/player.interface';
+import { IPlayer, IRole } from '@myorg/shared';
 import { RoleService } from 'src/roles/role.service';
-import { IRole } from 'src/shared/interfaces/role.interface';
 
 interface GameState {
   currentPlayerIndex : number;

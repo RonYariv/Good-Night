@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger';
 import { Role } from './role.schema';
 import { RoleService } from './role.service';
-import { WinCondition } from '../shared/enums/winCondition.enum';
+import { WinCondition } from '@myorg/shared';
 import { CreateRoleDto } from './dto/createRole.dto';
 
 @ApiTags('role')
