@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PlayerEvents = exports.RoleEvents = exports.ChatEvents = exports.RoomEvents = void 0;
-var RoomEvents;
+export var RoomEvents;
 (function (RoomEvents) {
     RoomEvents["CreateRoom"] = "createRoom";
     RoomEvents["RoomCreated"] = "roomCreated";
@@ -21,8 +18,8 @@ var RoomEvents;
     RoomEvents["GameEnded"] = "gameEnded";
     RoomEvents["CurrentPlayerTurn"] = "CurrentPlayerTurn";
     RoomEvents["Error"] = "error";
-})(RoomEvents || (exports.RoomEvents = RoomEvents = {}));
-var ChatEvents;
+})(RoomEvents || (RoomEvents = {}));
+export var ChatEvents;
 (function (ChatEvents) {
     ChatEvents["Join"] = "chat:join";
     ChatEvents["Leave"] = "chat:leave";
@@ -30,8 +27,8 @@ var ChatEvents;
     ChatEvents["NewMessage"] = "chat:new";
     ChatEvents["History"] = "chat:history";
     ChatEvents["Error"] = "chat:error";
-})(ChatEvents || (exports.ChatEvents = ChatEvents = {}));
-var RoleEvents;
+})(ChatEvents || (ChatEvents = {}));
+export var RoleEvents;
 (function (RoleEvents) {
     RoleEvents["Create"] = "role:create";
     RoleEvents["List"] = "role:list";
@@ -41,8 +38,8 @@ var RoleEvents;
     RoleEvents["Updated"] = "role:updated";
     RoleEvents["Deleted"] = "role:deleted";
     RoleEvents["Error"] = "role:error";
-})(RoleEvents || (exports.RoleEvents = RoleEvents = {}));
-var PlayerEvents;
+})(RoleEvents || (RoleEvents = {}));
+export var PlayerEvents;
 (function (PlayerEvents) {
     PlayerEvents["Create"] = "player:create";
     PlayerEvents["List"] = "player:list";
@@ -51,4 +48,4 @@ var PlayerEvents;
     PlayerEvents["Created"] = "player:created";
     PlayerEvents["Updated"] = "player:updated";
     PlayerEvents["Error"] = "player:error";
-})(PlayerEvents || (exports.PlayerEvents = PlayerEvents = {}));
+})(PlayerEvents || (PlayerEvents = {}));

@@ -1,18 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { ChatEvents, RoomEvents, type IChatMessage } from "@myorg/shared";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { socketService } from "./services/socket.service";
 import "./RoomPage.css";
+import { socketService } from "./services/socket.service";
 
 interface Player {
   id: string;
   name: string;
-}
-
-interface ChatMessage {
-  roomId: string;
-  senderId: string;
-  text: string;
-  at: number;
 }
 
 export function RoomPage() {
@@ -25,33 +19,32 @@ export function RoomPage() {
   const [copied, setCopied] = useState(false);
 
   // Chat state
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [messageText, setMessageText] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     socketService.connect();
 
-    socketService.emit("roomByGameCode", { gameCode });
+    socketService.emit(RoomEvents.RoomByGameCode, { gameCode });
 
-    socketService.on("roomData", (room) => {
+    socketService.on(RoomEvents.RoomData, (room) => {
       setPlayers(room.players);
     });
 
-    socketService.on("playerJoined", ({ room }) => {
+    socketService.on(RoomEvents.PlayerJoined, ({ room }) => {
       setPlayers(room.players);
     });
 
-    socketService.on("playerLeft", ({ room }) => {
+    socketService.on(RoomEvents.PlayerLeft, ({ room }) => {
       setPlayers(room.players);
     });
 
-    socketService.on("chat:history", (history: ChatMessage[]) => {
+    socketService.on(ChatEvents.History, (history: IChatMessage[]) => {
       setMessages(history);
     });
 
-    socketService.on("chat:new", (message: ChatMessage) => {
-      console.log("New chat message:", message);
+    socketService.on(ChatEvents.NewMessage, (message: IChatMessage) => {
       setMessages((prev) => [...prev, message]);
     });
 
@@ -61,7 +54,7 @@ export function RoomPage() {
   }, [gameCode]);
 
   const startGame = () => {
-    socketService.emit("startGame", { gameCode });
+    socketService.emit(RoomEvents.StartGame, { gameCode });
   };
 
   const copyGameCode = () => {
@@ -75,7 +68,7 @@ export function RoomPage() {
 
   const sendMessage = () => {
     if (!messageText.trim() || !playerId || !gameCode) return;
-    socketService.emit("chat:send", {
+    socketService.emit(ChatEvents.Send, {
       roomId: gameCode,
       senderId: playerId,
       text: messageText.trim(),
@@ -103,7 +96,7 @@ export function RoomPage() {
       <button
         onClick={() => {
           if (playerId && gameCode) {
-            socketService.emit("leaveRoom", { roomId: gameCode, playerId });
+            socketService.emit(RoomEvents.LeaveRoom, { roomId: gameCode, playerId });
             navigate("/");
           }
         }}

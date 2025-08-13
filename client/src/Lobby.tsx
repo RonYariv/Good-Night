@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { socketService } from "./services/socket.service";
 import "./Lobby.css";
+import { RoomEvents } from "@myorg/shared";
 
 export function Lobby() {
   const [roomName, setRoomName] = useState("");
@@ -18,8 +19,8 @@ export function Lobby() {
   const createRoom = () => {
     if (!roomName) return setError("Room name is required");
 
-    socketService.emit("createRoom", { name: roomName });
-    socketService.once("roomCreated", (room) => {
+    socketService.emit(RoomEvents.CreateRoom, { name: roomName });
+    socketService.once(RoomEvents.RoomCreated, (room) => {
       setError(null);
       navigate(`/room/${room.gameCode}`, { state: { playerId: room.host } });
     });
@@ -29,10 +30,8 @@ export function Lobby() {
     if (!playerName || !joinRoomId)
       return setError("Player name and room ID are required");
 
-    socketService.emit("joinRoom", { roomId: joinRoomId, playerName });
-    socketService.once("playerJoined", ({ room, playerId }) => {
-      console.log("heloooooo")
-      console.log("Player joined room:", playerId);
+    socketService.emit(RoomEvents.JoinRoom, { roomId: joinRoomId, playerName });
+    socketService.once(RoomEvents.PlayerJoined, ({ room, playerId }) => {
       setError(null);
       navigate(`/room/${room.gameCode}`, { state: { playerId: playerId } });
     });
