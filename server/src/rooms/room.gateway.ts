@@ -1,19 +1,19 @@
 import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
-  MessageBody,
   ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
-import { Namespace, Server, Socket } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
-import { RoomEvents, ChatEvents } from '../shared/events';
-import { RoomService } from './room.service';
+import { Namespace, Server, Socket } from 'socket.io';
+import { ChatEvents, RoomEvents } from '../shared/events';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameManagementService } from './gameManagment.service';
+import { RoomService } from './room.service';
 
 @WebSocketGateway({
   cors: {
@@ -23,12 +23,11 @@ import { GameManagementService } from './gameManagment.service';
   namespace: '/rooms',
 })
 export class RoomGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
-{
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
   constructor(
     private readonly roomService: RoomService,
     private readonly gameManagmentService: GameManagementService,
-  ) {}
+  ) { }
 
   @WebSocketServer()
   server: Server;
@@ -38,10 +37,10 @@ export class RoomGateway
 
   afterInit(nameSpace: Namespace) {
     instrument(nameSpace.server, {
-    auth: false,
-    mode: 'production',
+      auth: false,
+      mode: 'production',
     });
-}
+  }
 
   // Connection handling
   handleConnection(client: Socket) {
@@ -83,10 +82,6 @@ export class RoomGateway
       const room = await result.room;
       const id = result.id;
 
-      // Send chat history
-      const history = this.roomIdToMessages.get(data.roomId) ?? [];
-      client.emit(ChatEvents.History, history);
-
       this.server.to(data.roomId).emit(RoomEvents.PlayerJoined, {
         room,
         playerId: id
@@ -118,12 +113,16 @@ export class RoomGateway
 
       client.emit(RoomEvents.RoomData, room);
 
+      // Send chat history
+      const history = this.roomIdToMessages.get(room.gameCode) ?? [];
+      client.emit(ChatEvents.History, history);
+
       return { success: true, room };
     } catch (error: any) {
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }
-}
+  }
 
 
   @SubscribeMessage(RoomEvents.LeaveRoom)
