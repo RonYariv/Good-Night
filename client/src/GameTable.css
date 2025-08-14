@@ -4,7 +4,7 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #1e1e1e; /* Dark background for app */
+  background-color: #1e1e1e;
 }
 
 .table {
@@ -12,7 +12,7 @@
    width: 80vmin;
   height: 80vmin;
   border-radius: 50%;
-  background-color: #2c2c2c; /* Dark table color */
+  background-color: #2c2c2c;
   display: flex;
   justify-content: center;
   align-items: center;
