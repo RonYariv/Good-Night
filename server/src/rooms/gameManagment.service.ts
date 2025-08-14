@@ -33,6 +33,7 @@ export class GameManagementService {
 
 
   async startGame(roomId: string, players: IPlayer[]) {
+    console.log(players);
     const roles = await this.roleService.list();
 
     // Shuffle roles
@@ -43,7 +44,8 @@ export class GameManagementService {
 
     // Assign the remaining shuffled roles to players (1 per player, no repeats)
     const playersWithRoles = players.map((player, index) => ({
-    ...player,
+      ...player,
+      id: player.id,
     currentRole: shuffledRoles[index] ?? null,
     }));
 
@@ -58,7 +60,7 @@ export class GameManagementService {
       centerRoles
     };
     this.games.set(roomId, gameState);
-    return gameState;
+    return sortedPlayers;
   }
 
   handlePlayerAction(roomId: string, playerId: string, action: any) {

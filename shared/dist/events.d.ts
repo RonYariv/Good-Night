@@ -26,22 +26,6 @@ export declare enum ChatEvents {
     History = "chat:history",
     Error = "chat:error"
 }
-export declare enum RoleEvents {
-    Create = "role:create",
-    List = "role:list",
-    Update = "role:update",
-    Delete = "role:delete",
-    Created = "role:created",
-    Updated = "role:updated",
-    Deleted = "role:deleted",
-    Error = "role:error"
-}
-export declare enum PlayerEvents {
-    Create = "player:create",
-    List = "player:list",
-    Get = "player:get",
-    SetRole = "player:setRole",
-    Created = "player:created",
-    Updated = "player:updated",
-    Error = "player:error"
+export declare enum GameEvents {
+    RevealRoles = "revealRoles"
 }

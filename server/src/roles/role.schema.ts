@@ -13,7 +13,7 @@ export class Role {
   @Prop({ required: true, enum: WinCondition })
   winCondition: WinCondition;
 
-  @Prop({ required: true })
+  @Prop()
   nightOrder: number;
 }
 

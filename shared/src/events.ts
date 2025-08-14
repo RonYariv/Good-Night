@@ -28,23 +28,6 @@ export enum ChatEvents {
   Error = 'chat:error',
 }
 
-export enum RoleEvents {
-  Create = 'role:create',
-  List = 'role:list',
-  Update = 'role:update',
-  Delete = 'role:delete',
-  Created = 'role:created',
-  Updated = 'role:updated',
-  Deleted = 'role:deleted',
-  Error = 'role:error',
-}
-
-export enum PlayerEvents {
-  Create = 'player:create',
-  List = 'player:list',
-  Get = 'player:get',
-  SetRole = 'player:setRole',
-  Created = 'player:created',
-  Updated = 'player:updated',
-  Error = 'player:error',
+export enum GameEvents {
+  RevealRoles = "revealRoles",
 }

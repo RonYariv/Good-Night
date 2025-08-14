@@ -41,7 +41,7 @@ export class RoomService {
   }
 
   async getRoomByGameCode(gameCode: string): Promise<RoomDocument> {
-    const room = await this.roomModel.findOne({ gameCode, status: 'waiting' }).exec();
+    const room = await this.roomModel.findOne({ gameCode }).exec();
     if (!room) {
       throw new NotFoundException('Room not found');
     }

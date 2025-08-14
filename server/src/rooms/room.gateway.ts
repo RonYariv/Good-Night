@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { instrument } from '@socket.io/admin-ui';
 import { Namespace, Server, Socket } from 'socket.io';
-import { ChatEvents, RoomEvents, IChatMessage } from '@myorg/shared';
+import { ChatEvents, RoomEvents, IChatMessage, GameEvents, IPlayer } from '@myorg/shared';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameManagementService } from './gameManagment.service';
 import { RoomService } from './room.service';
@@ -44,11 +44,11 @@ export class RoomGateway
 
   // Connection handling
   handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
+    //console.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    //console.log(`Client disconnected: ${client.id}`);
   }
 
   // Room management
@@ -104,7 +104,6 @@ export class RoomGateway
       const { gameCode } = data;
       client.join(gameCode);
 
-      // Fetch the room data from your RoomService
       const room = await this.roomService.getRoomByGameCode(gameCode);
       if (!room) {
         client.emit(RoomEvents.Error, { message: 'Room not found' });
@@ -151,13 +150,28 @@ export class RoomGateway
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      console.log('Starting game for room:', data.gameCode);
+      // 1. Update room status
       const room = await this.roomService.updateRoomStatus(data.gameCode, 'playing');
+
+      console.log(`Game started in room ${data.gameCode}`);
+      // 2. Emit general events
       this.server.to(data.gameCode).emit(RoomEvents.GameStarted, room);
       this.server.emit(RoomEvents.RoomListUpdated);
-      await this.gameManagmentService.startGame(room.id, room.players);
+
+      // 3. Start game logic
+      const playersWithRoles:IPlayer[] = await this.gameManagmentService.startGame(room.id, room.players);
+
+      // 4. Emit current turn
       const currentPlayerTurn = this.gameManagmentService.getCurrentTurnByRoomId(room.id);
       this.server.to(data.gameCode).emit(RoomEvents.CurrentPlayerTurn, currentPlayerTurn);
+
+      // 5. Emit all roles
+      const rolesData = playersWithRoles.map(p => ({
+        playerId: p.id,
+        role: p.currentRole,
+      }));
+      this.server.to(data.gameCode).emit(GameEvents.RevealRoles, { roles: rolesData });
+
       return { success: true, room };
     } catch (error: any) {
       console.log(error);
@@ -165,6 +179,7 @@ export class RoomGateway
       return { success: false, error: error.message };
     }
   }
+
 
   @SubscribeMessage(RoomEvents.PlayerAction)
   async handlePlayerAction(

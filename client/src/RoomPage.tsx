@@ -35,7 +35,8 @@ export function RoomPage() {
       [ChatEvents.NewMessage, (message: IChatMessage) =>
         setMessages((prev) => [...prev, message])
       ],
-      [RoomEvents.GameStarted, () => {
+      [RoomEvents.GameStarted, () =>
+      {
         console.log("Game started!");
         navigate(`/game/${gameCode}`, {
           state: {

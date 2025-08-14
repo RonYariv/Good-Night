@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { WsDocsController } from './ws/ws-docs.controller';
 import { RoleModule } from './roles/role.module';
 import { RoomModule } from './rooms/room.module';
 
@@ -12,7 +11,7 @@ import { RoomModule } from './rooms/room.module';
     RoleModule,
     RoomModule
   ],
-  controllers: [AppController, WsDocsController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

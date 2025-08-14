@@ -28,24 +28,7 @@ export var ChatEvents;
     ChatEvents["History"] = "chat:history";
     ChatEvents["Error"] = "chat:error";
 })(ChatEvents || (ChatEvents = {}));
-export var RoleEvents;
-(function (RoleEvents) {
-    RoleEvents["Create"] = "role:create";
-    RoleEvents["List"] = "role:list";
-    RoleEvents["Update"] = "role:update";
-    RoleEvents["Delete"] = "role:delete";
-    RoleEvents["Created"] = "role:created";
-    RoleEvents["Updated"] = "role:updated";
-    RoleEvents["Deleted"] = "role:deleted";
-    RoleEvents["Error"] = "role:error";
-})(RoleEvents || (RoleEvents = {}));
-export var PlayerEvents;
-(function (PlayerEvents) {
-    PlayerEvents["Create"] = "player:create";
-    PlayerEvents["List"] = "player:list";
-    PlayerEvents["Get"] = "player:get";
-    PlayerEvents["SetRole"] = "player:setRole";
-    PlayerEvents["Created"] = "player:created";
-    PlayerEvents["Updated"] = "player:updated";
-    PlayerEvents["Error"] = "player:error";
-})(PlayerEvents || (PlayerEvents = {}));
+export var GameEvents;
+(function (GameEvents) {
+    GameEvents["RevealRoles"] = "revealRoles";
+})(GameEvents || (GameEvents = {}));
