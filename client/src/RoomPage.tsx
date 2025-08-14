@@ -35,6 +35,17 @@ export function RoomPage() {
       [ChatEvents.NewMessage, (message: IChatMessage) =>
         setMessages((prev) => [...prev, message])
       ],
+      [RoomEvents.GameStarted, () => {
+        console.log("Game started!");
+        navigate(`/game/${gameCode}`, {
+          state: {
+            players,
+            playerId,
+            gameCode
+          }
+        })
+      }
+      ],
     ];
 
     handlers.forEach(([event, handler]) => socketService.on(event, handler));
@@ -43,9 +54,8 @@ export function RoomPage() {
       handlers.forEach(([event, handler]) =>
         socketService.off(event, handler)
       );
-      socketService.disconnect();
     };
-  }, [gameCode]);
+  }, [gameCode, navigate, playerId, players]);
 
   const startGame = () => {
     socketService.emit(RoomEvents.StartGame, { gameCode });
@@ -150,7 +160,7 @@ export function RoomPage() {
       <div className="room-actions">
         <button
           onClick={startGame}
-          disabled={players.length < 4}
+          disabled={players.length < 2}
           className="btn"
         >
           Start Game

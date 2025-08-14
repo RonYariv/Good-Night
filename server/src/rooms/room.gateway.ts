@@ -147,18 +147,20 @@ export class RoomGateway
 
   @SubscribeMessage(RoomEvents.StartGame)
   async handleStartGame(
-    @MessageBody() data: { roomId: string },
+    @MessageBody() data: { gameCode: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const room = await this.roomService.updateRoomStatus(data.roomId, 'playing');
-      this.server.to(data.roomId).emit(RoomEvents.GameStarted, room);
+      console.log('Starting game for room:', data.gameCode);
+      const room = await this.roomService.updateRoomStatus(data.gameCode, 'playing');
+      this.server.to(data.gameCode).emit(RoomEvents.GameStarted, room);
       this.server.emit(RoomEvents.RoomListUpdated);
-      this.gameManagmentService.startGame(room.id, room.players);
+      await this.gameManagmentService.startGame(room.id, room.players);
       const currentPlayerTurn = this.gameManagmentService.getCurrentTurnByRoomId(room.id);
-      this.server.to(data.roomId).emit(RoomEvents.CurrentPlayerTurn, currentPlayerTurn);
+      this.server.to(data.gameCode).emit(RoomEvents.CurrentPlayerTurn, currentPlayerTurn);
       return { success: true, room };
     } catch (error: any) {
+      console.log(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }

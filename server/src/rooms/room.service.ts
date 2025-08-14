@@ -10,14 +10,14 @@ import { randomUUID } from 'crypto';
 export class RoomService {
   constructor(
     @InjectModel(Room.name) private roomModel: Model<RoomDocument>,
-  ) {}
+  ) { }
 
   async createRoom(createRoomDto: CreateRoomDto): Promise<RoomDocument> {
-    const host : IPlayer = {id: randomUUID(), name: "host", currentRole: null, roleHistory: null };
+    const host: IPlayer = { id: randomUUID(), name: "host", currentRole: null, roleHistory: null };
     const room: RoomDocument = new this.roomModel({
       ...createRoomDto,
-      host : host.id,
-      gameCode : this.generateGameCode(),
+      host: host.id,
+      gameCode: this.generateGameCode(),
       maxPlayers: 6,
       currentPlayers: 1,
       players: [host],
@@ -46,46 +46,51 @@ export class RoomService {
       throw new NotFoundException('Room not found');
     }
     return room;
-}
+  }
 
   async joinRoom(roomId: string, playerName: string): Promise<{ room: Promise<RoomDocument>; id: string; }> {
     const room = await this.getRoomByGameCode(roomId);
-    
+
     if (room.status !== 'waiting') {
       throw new BadRequestException('Game has already started');
     }
-    
+
     if (room.currentPlayers >= room.maxPlayers) {
       throw new BadRequestException('Room is full');
     }
     const id = randomUUID();
     room.players.push({ id, name: playerName, currentRole: null, roleHistory: [] });
     room.currentPlayers += 1;
-    
-    return {room : room.save(), id };
+
+    return { room: room.save(), id };
   }
 
   async leaveRoom(roomId: string, playerId: string): Promise<RoomDocument> {
     const room = await this.getRoomByGameCode(roomId);
-    
+
     if (!room.players.some(player => player.id === playerId)) {
       throw new BadRequestException('Player not in room');
     }
 
     room.players = room.players.filter(player => player.id !== playerId);
     room.currentPlayers -= 1;
-    
+
     // If host leaves, assign new host or close room
     if (room.host === playerId && room.players.length > 0) {
       room.host = room.players[0].id;
     }
-    
-    // If no players left, delete room
+
+    // If no players left, update to finished
     if (room.players.length === 0) {
-      await this.roomModel.findByIdAndDelete(roomId);
+      await this.roomModel.findByIdAndUpdate(
+        roomId,
+        { status: "finished" },
+        { new: true }
+      );
       return room;
     }
-    
+
+
     return room.save();
   }
 

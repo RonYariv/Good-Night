@@ -2,6 +2,7 @@ import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import './App.css'
 import { Lobby } from './Lobby'
 import { RoomPage } from './RoomPage'
+import { GamePage } from './GamePage'
 
 function App() {
 
@@ -11,6 +12,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Lobby />} />
           <Route path="/room/:gameCode" element={<RoomPage />} />
+          <Route path="/game/:gameCode" element={<GamePage />} />
         </Routes>
       </Router>
     </>
