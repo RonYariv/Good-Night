@@ -3,37 +3,36 @@ import { IPlayer, IRole } from '@myorg/shared';
 import { RoleService } from 'src/roles/role.service';
 
 interface GameState {
-  currentPlayerIndex : number;
-  players : IPlayer[];
-  centerRoles : IRole[];
+  currentPlayerIndex: number;
+  players: IPlayer[];
+  centerRoles: IRole[];
 }
 
 @Injectable()
 export class GameManagementService {
   private games: Map<string, GameState> = new Map();
 
-  constructor(private readonly roleService : RoleService){};
+  constructor(private readonly roleService: RoleService) { };
 
 
-  getCurrentTurnByRoomId(roomId:string){
-    const game = this.games.get(roomId);
-    if(!game){
-        throw new Error('Game does not exist');
+  getCurrentPlayerByRoomId(gameCode: string) {
+    const game = this.games.get(gameCode);
+    if (!game) {
+      throw new Error('Game does not exist');
     }
 
     const currentTurnIndex = (game.currentPlayerIndex + 1) % game.players.length;
     return game.players[currentTurnIndex];
   }
 
-  isYourTurn(roomId:string, playerId :string){
-    const game = this.games.get(roomId);
+  isYourTurn(gameCode: string, playerId: string) {
+    const game = this.games.get(gameCode);
     return playerId == game?.players[game.currentPlayerIndex].id;
   }
 
 
 
-  async startGame(roomId: string, players: IPlayer[]) {
-    console.log(players);
+  async startGame(gameCode: string, players: IPlayer[]) {
     const roles = await this.roleService.list();
 
     // Shuffle roles
@@ -46,25 +45,25 @@ export class GameManagementService {
     const playersWithRoles = players.map((player, index) => ({
       ...player,
       id: player.id,
-    currentRole: shuffledRoles[index] ?? null,
+      currentRole: shuffledRoles[index] ?? null,
     }));
 
     // Sort players by nightOrder of their assigned role
     const sortedPlayers = playersWithRoles.sort(
-    (a, b) => (a.currentRole?.nightOrder ?? 0) - (b.currentRole?.nightOrder ?? 0)
+      (a, b) => (a.currentRole?.nightOrder ?? 0) - (b.currentRole?.nightOrder ?? 0)
     );
-      
+
     const gameState: GameState = {
       currentPlayerIndex: 0,
-      players : sortedPlayers,
+      players: sortedPlayers,
       centerRoles
     };
-    this.games.set(roomId, gameState);
+    this.games.set(gameCode, gameState);
     return sortedPlayers;
   }
 
-  handlePlayerAction(roomId: string, playerId: string, action: any) {
-    const game = this.games.get(roomId);
+  handlePlayerAction(gameCode: string, playerId: string, action: any) {
+    const game = this.games.get(gameCode);
     if (!game) {
       throw new Error('Game not started or does not exist');
     }
@@ -73,6 +72,6 @@ export class GameManagementService {
     // For example, record player moves, check win conditions, etc.
 
     // This example just echoes back the action for demo
-    return { roomId, playerId, action, gameState: game };
+    return { gameCode, playerId, action, gameState: game };
   }
 }

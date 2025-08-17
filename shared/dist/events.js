@@ -16,7 +16,6 @@ export var RoomEvents;
     RoomEvents["EndGame"] = "endGame";
     RoomEvents["GameStarted"] = "gameStarted";
     RoomEvents["GameEnded"] = "gameEnded";
-    RoomEvents["CurrentPlayerTurn"] = "CurrentPlayerTurn";
     RoomEvents["Error"] = "error";
 })(RoomEvents || (RoomEvents = {}));
 export var ChatEvents;
@@ -31,4 +30,6 @@ export var ChatEvents;
 export var GameEvents;
 (function (GameEvents) {
     GameEvents["RevealRoles"] = "revealRoles";
+    GameEvents["CurrentPlayerTurn"] = "currentPlayerTurn";
+    GameEvents["GetCurrentTurn"] = "getCurrentTurn";
 })(GameEvents || (GameEvents = {}));

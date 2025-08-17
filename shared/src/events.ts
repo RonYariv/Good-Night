@@ -15,7 +15,6 @@ export enum RoomEvents {
   EndGame = 'endGame',
   GameStarted = 'gameStarted',
   GameEnded = 'gameEnded',
-  CurrentPlayerTurn = 'CurrentPlayerTurn',
   Error = 'error',
 }
 
@@ -30,4 +29,6 @@ export enum ChatEvents {
 
 export enum GameEvents {
   RevealRoles = "revealRoles",
+  CurrentPlayerTurn = 'currentPlayerTurn',
+  GetCurrentTurn = 'getCurrentTurn',
 }

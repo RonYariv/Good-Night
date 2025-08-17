@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
 import { GameEvents, type IPlayer, type IRole } from "@myorg/shared";
-import { socketService } from "./services/socket.service";
+import { useEffect, useState } from "react";
 import "./GameTable.css";
+import { socketService } from "./services/socket.service";
 
 interface GameTableProps {
   players: IPlayer[];
   playerId: string;
+  gameCode: string;
 }
 
-export function GameTable({ players, playerId }: GameTableProps) {
+export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [revealedRole, setRevealedRole] = useState<IRole | null>(null);
 
   const currentPlayer = players.find(p => p.id === playerId);
@@ -32,17 +33,30 @@ export function GameTable({ players, playerId }: GameTableProps) {
   };
 
   useEffect(() => {
-    const handler = (data: { roles: { playerId: string; role: IRole }[] }) => {
-      console.log("Reveal roles", data);
-      const myRole = data.roles.find(r => r.playerId === playerId)?.role;
-      if (!myRole) return;
-      setRevealedRole(myRole);
+    socketService.emit(GameEvents.GetCurrentTurn, { gameCode });
 
-      setTimeout(() => setRevealedRole(null), 10000);
+    const handlers: [string, (data: any) => void][] = [
+      [
+        GameEvents.RevealRoles,
+        (data: { roles: { playerId: string; role: IRole }[] }) => {
+          const myRole = data.roles.find(r => r.playerId === playerId)?.role;
+          if (!myRole) return;
+          setRevealedRole(myRole);
+          setTimeout(() => setRevealedRole(null), 10000);
+        }
+      ],
+      [
+        GameEvents.CurrentPlayerTurn,
+        (currentPlayerId: string) => {
+          console.log("Current player's turn:", currentPlayerId);
+        }
+      ]
+    ];
+
+    handlers.forEach(([event, fn]) => socketService.on(event, fn));
+    return () => {
+      handlers.forEach(([event, fn]) => socketService.off(event, fn));
     };
-
-    socketService.on(GameEvents.RevealRoles, handler);
-    return () => socketService.off(GameEvents.RevealRoles, handler);
   }, [playerId]);
 
   const renderCard = (player: IPlayer) => (

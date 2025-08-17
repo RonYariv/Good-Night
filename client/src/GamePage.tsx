@@ -15,6 +15,7 @@ export function GamePage() {
     <GameTable
       players={players}
       playerId={playerId}
+      gameCode={gameCode}
     />
   );
 }

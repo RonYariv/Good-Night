@@ -153,17 +153,16 @@ export class RoomGateway
       // 1. Update room status
       const room = await this.roomService.updateRoomStatus(data.gameCode, 'playing');
 
-      console.log(`Game started in room ${data.gameCode}`);
       // 2. Emit general events
       this.server.to(data.gameCode).emit(RoomEvents.GameStarted, room);
       this.server.emit(RoomEvents.RoomListUpdated);
 
       // 3. Start game logic
-      const playersWithRoles:IPlayer[] = await this.gameManagmentService.startGame(room.id, room.players);
+      const playersWithRoles: IPlayer[] = await this.gameManagmentService.startGame(data.gameCode, room.players);
 
       // 4. Emit current turn
-      const currentPlayerTurn = this.gameManagmentService.getCurrentTurnByRoomId(room.id);
-      this.server.to(data.gameCode).emit(RoomEvents.CurrentPlayerTurn, currentPlayerTurn);
+      const currentPlayer = this.gameManagmentService.getCurrentPlayerByRoomId(data.gameCode);
+      this.server.to(data.gameCode).emit(GameEvents.CurrentPlayerTurn, currentPlayer.id);
 
       // 5. Emit all roles
       const rolesData = playersWithRoles.map(p => ({
@@ -180,6 +179,30 @@ export class RoomGateway
     }
   }
 
+  @SubscribeMessage(GameEvents.GetCurrentTurn)
+  async handleGetCurrentTurn(
+    @MessageBody() data: { gameCode: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const currentPlayer = this.gameManagmentService.getCurrentPlayerByRoomId(data.gameCode);
+
+      if (!currentPlayer) {
+        client.emit(RoomEvents.Error, { message: "No current player found" });
+        return { success: false, error: "No current player found" };
+      }
+
+      // 👇 Only emit to the requesting client
+      client.emit(GameEvents.CurrentPlayerTurn, currentPlayer.id);
+
+      return { success: true, currentPlayerId: currentPlayer.id };
+    } catch (error: any) {
+      client.emit(RoomEvents.Error, { message: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+
 
   @SubscribeMessage(RoomEvents.PlayerAction)
   async handlePlayerAction(
@@ -194,10 +217,10 @@ export class RoomGateway
       }
 
       // Get the next player's turn after processing
-      const nextPlayerTurn = this.gameManagmentService.getCurrentTurnByRoomId(data.roomId);
+      const nextPlayer = this.gameManagmentService.getCurrentPlayerByRoomId(data.roomId);
 
       // Broadcast current turn to all players in the room
-      this.server.to(data.roomId).emit(RoomEvents.CurrentPlayerTurn, nextPlayerTurn);
+      this.server.to(data.roomId).emit(GameEvents.CurrentPlayerTurn, nextPlayer.id);
 
       return { success: true };
     } catch (error: any) {

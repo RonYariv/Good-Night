@@ -15,7 +15,6 @@ export declare enum RoomEvents {
     EndGame = "endGame",
     GameStarted = "gameStarted",
     GameEnded = "gameEnded",
-    CurrentPlayerTurn = "CurrentPlayerTurn",
     Error = "error"
 }
 export declare enum ChatEvents {
@@ -27,5 +26,7 @@ export declare enum ChatEvents {
     Error = "chat:error"
 }
 export declare enum GameEvents {
-    RevealRoles = "revealRoles"
+    RevealRoles = "revealRoles",
+    CurrentPlayerTurn = "currentPlayerTurn",
+    GetCurrentTurn = "getCurrentTurn"
 }
