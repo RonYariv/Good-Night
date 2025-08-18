@@ -17,19 +17,31 @@ export class GameManagementService {
 
   getCurrentRoleTurnByRoomId(gameCode: string) {
     const game = this.games.get(gameCode);
-    if (!game) {
-      throw new Error('Game does not exist');
-    }
+    if (!game) throw new Error('Game does not exist');
 
-    const currentTurnIndex = (game.currentPlayerIndex + 1) % game.players.length;
-    return game.players[currentTurnIndex].currentRole;
+    const currentIndex = game.currentPlayerIndex;
+
+    game.currentPlayerIndex++;
+    this.games.set(gameCode, game);
+
+    const currentPlayer = game.players[currentIndex];
+
+    // Return the role if it exists and has nightOrder
+    return currentPlayer.currentRole?.nightOrder != null ? currentPlayer.currentRole : null;
   }
+
 
   isYourTurn(gameCode: string, playerId: string) {
     const game = this.games.get(gameCode);
-    return playerId == game?.players[game.currentPlayerIndex].id;
-  }
+    if (!game) return false;
 
+    const currentIndex = game.currentPlayerIndex;
+    const currentPlayer = game.players[currentIndex];
+    if (!currentPlayer?.currentRole) return false;
+
+    const playerRoleId = game.players.find(p => p.id === playerId)?.currentRole?.id;
+    return playerRoleId === currentPlayer.currentRole.id;
+  }
 
 
   async startGame(gameCode: string, players: IPlayer[]) {
@@ -49,9 +61,11 @@ export class GameManagementService {
     }));
 
     // Sort players by nightOrder of their assigned role
-    const sortedPlayers = playersWithRoles.sort(
-      (a, b) => (a.currentRole?.nightOrder ?? 0) - (b.currentRole?.nightOrder ?? 0)
-    );
+    const sortedPlayers = playersWithRoles.sort((a, b) => {
+      const aOrder = a.currentRole?.nightOrder ?? Infinity;
+      const bOrder = b.currentRole?.nightOrder ?? Infinity;
+      return aOrder - bOrder;
+    });
 
     const gameState: GameState = {
       currentPlayerIndex: 0,

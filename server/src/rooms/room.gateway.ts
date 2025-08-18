@@ -162,6 +162,10 @@ export class RoomGateway
 
       // 4. Emit current turn
       const currentRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
+      if(!currentRole){
+        console.log("No current role found");
+        return { success: false, error: "No current role found" };
+      }
       this.server.to(data.gameCode).emit(GameEvents.CurrentRoleTurn, currentRole);
 
       // 5. Emit all roles
@@ -208,24 +212,31 @@ export class RoomGateway
 
   @SubscribeMessage(GameEvents.PlayerAction)
   async handlePlayerAction(
-    @MessageBody() data: { roomId: string; playerId: string; action: any },
+    @MessageBody() data: { gameCode: string; playerId: string; action: any },
     @ConnectedSocket() client: Socket,
   ) {
     try {
       // Check if it is this player's turn before processing
-      if (this.gameManagmentService.isYourTurn(data.roomId, data.playerId)) {
+      if (this.gameManagmentService.isYourTurn(data.gameCode, data.playerId)) {
+        console.log('Processing player action:', data);
         client.emit(RoomEvents.Error, { message: 'Not your turn' });
         return { success: false, error: 'Not your turn' };
       }
 
       // Get the next player's turn after processing
-      const nextRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.roomId);
+      const nextRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
+
+       if (!nextRole) {
+        client.emit(RoomEvents.Error, { message: "No current role found" });
+        return { success: false, error: "No current role found" };
+      }
 
       // Broadcast current turn to all players in the room
-      this.server.to(data.roomId).emit(GameEvents.CurrentRoleTurn, nextRole);
+      this.server.to(data.gameCode).emit(GameEvents.CurrentRoleTurn, nextRole);
 
       return { success: true };
     } catch (error: any) {
+      console.log(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }
