@@ -7,7 +7,6 @@ export var RoomEvents;
     RoomEvents["GetRooms"] = "getRooms";
     RoomEvents["PlayerJoined"] = "playerJoined";
     RoomEvents["PlayerLeft"] = "playerLeft";
-    RoomEvents["PlayerAction"] = "PlayerAction";
     RoomEvents["RoomList"] = "roomList";
     RoomEvents["RoomListUpdated"] = "roomListUpdated";
     RoomEvents["RoomByGameCode"] = "roomByGameCode";
@@ -30,6 +29,7 @@ export var ChatEvents;
 export var GameEvents;
 (function (GameEvents) {
     GameEvents["RevealRoles"] = "revealRoles";
-    GameEvents["CurrentPlayerTurn"] = "currentPlayerTurn";
+    GameEvents["CurrentRoleTurn"] = "currentRoleTurn";
     GameEvents["GetCurrentTurn"] = "getCurrentTurn";
+    GameEvents["PlayerAction"] = "PlayerAction";
 })(GameEvents || (GameEvents = {}));

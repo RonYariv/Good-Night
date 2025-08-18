@@ -4,3 +4,4 @@ export * from './interfaces/player.interface.js';
 export * from './interfaces/room.interface.js';
 export * from './interfaces/role.interface.js';
 export * from './enums/winCondition.enum.js';
+export * from './enums/role.enum.js';

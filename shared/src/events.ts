@@ -6,7 +6,6 @@ export enum RoomEvents {
   GetRooms = 'getRooms',
   PlayerJoined = 'playerJoined',
   PlayerLeft = 'playerLeft',
-  PlayerAction = 'PlayerAction',
   RoomList = 'roomList',
   RoomListUpdated = 'roomListUpdated',
   RoomByGameCode = 'roomByGameCode',
@@ -29,6 +28,7 @@ export enum ChatEvents {
 
 export enum GameEvents {
   RevealRoles = "revealRoles",
-  CurrentPlayerTurn = 'currentPlayerTurn',
+  CurrentRoleTurn = 'currentRoleTurn',
   GetCurrentTurn = 'getCurrentTurn',
+  PlayerAction = "PlayerAction",
 }

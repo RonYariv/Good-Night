@@ -15,14 +15,14 @@ export class GameManagementService {
   constructor(private readonly roleService: RoleService) { };
 
 
-  getCurrentPlayerByRoomId(gameCode: string) {
+  getCurrentRoleTurnByRoomId(gameCode: string) {
     const game = this.games.get(gameCode);
     if (!game) {
       throw new Error('Game does not exist');
     }
 
     const currentTurnIndex = (game.currentPlayerIndex + 1) % game.players.length;
-    return game.players[currentTurnIndex];
+    return game.players[currentTurnIndex].currentRole;
   }
 
   isYourTurn(gameCode: string, playerId: string) {

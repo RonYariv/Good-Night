@@ -6,7 +6,6 @@ export declare enum RoomEvents {
     GetRooms = "getRooms",
     PlayerJoined = "playerJoined",
     PlayerLeft = "playerLeft",
-    PlayerAction = "PlayerAction",
     RoomList = "roomList",
     RoomListUpdated = "roomListUpdated",
     RoomByGameCode = "roomByGameCode",
@@ -27,6 +26,7 @@ export declare enum ChatEvents {
 }
 export declare enum GameEvents {
     RevealRoles = "revealRoles",
-    CurrentPlayerTurn = "currentPlayerTurn",
-    GetCurrentTurn = "getCurrentTurn"
+    CurrentRoleTurn = "currentRoleTurn",
+    GetCurrentTurn = "getCurrentTurn",
+    PlayerAction = "PlayerAction"
 }
