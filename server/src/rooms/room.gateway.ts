@@ -192,6 +192,8 @@ export class RoomGateway
         return { success: false, error: "No current player found" };
       }
 
+      client.join(data.gameCode);
+
       // 👇 Only emit to the requesting client
       client.emit(GameEvents.CurrentPlayerTurn, currentPlayer.id);
 

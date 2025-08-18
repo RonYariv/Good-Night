@@ -11,6 +11,7 @@ interface GameTableProps {
 
 export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [revealedRole, setRevealedRole] = useState<IRole | null>(null);
+  const [currentTurnRole, setCurrentTurnRole] = useState<string | null>(null);
 
   const currentPlayer = players.find(p => p.id === playerId);
   const otherPlayers = players.filter(p => p.id !== playerId);
@@ -33,31 +34,34 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   };
 
   useEffect(() => {
+    if(!socketService.socket){
+      socketService.connect();
+    }
     socketService.emit(GameEvents.GetCurrentTurn, { gameCode });
 
     const handlers: [string, (data: any) => void][] = [
-      [
-        GameEvents.RevealRoles,
-        (data: { roles: { playerId: string; role: IRole }[] }) => {
-          const myRole = data.roles.find(r => r.playerId === playerId)?.role;
-          if (!myRole) return;
-          setRevealedRole(myRole);
-          setTimeout(() => setRevealedRole(null), 10000);
+      [GameEvents.RevealRoles, (data: { roles: { playerId: string; role: IRole }[] }) => {
+        const myRole = data.roles.find(r => r.playerId === playerId)?.role;
+        if (!myRole) return;
+        setRevealedRole(myRole);
+        setTimeout(() => setRevealedRole(null), 10000);
+      }],
+      [GameEvents.CurrentPlayerTurn, (currentPlayerId: string) => {
+        console.log("Current player's turn:", currentPlayerId);
+        const turnPlayer = players.find(p => p.id === currentPlayerId);
+        if (turnPlayer?.currentRole) {
+          setCurrentTurnRole(turnPlayer.currentRole.name);
+        } else {
+          setCurrentTurnRole(null);
         }
-      ],
-      [
-        GameEvents.CurrentPlayerTurn,
-        (currentPlayerId: string) => {
-          console.log("Current player's turn:", currentPlayerId);
-        }
-      ]
+      }]
     ];
 
     handlers.forEach(([event, fn]) => socketService.on(event, fn));
     return () => {
       handlers.forEach(([event, fn]) => socketService.off(event, fn));
     };
-  }, [playerId]);
+  }, [playerId, players]);
 
   const renderCard = (player: IPlayer) => (
     <div className="card-placeholder">
@@ -69,6 +73,13 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
   return (
     <div className="table-container">
+      {/* 🔹 Turn text outside circle */}
+      {currentTurnRole && (
+        <div className="turn-text">
+          {currentTurnRole} wake up
+        </div>
+      )}
+
       <div className="table">
         {/* Community cards */}
         <div className="community-cards">
