@@ -26,16 +26,31 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
   const getPosition = useCallback(
     (index: number) => {
-      const totalPlayers = otherPlayers.length;
-      if (totalPlayers === 0) return { x: 50, y: 50 };
-      const angle = (2 * Math.PI * index) / totalPlayers - Math.PI / 2;
+      const totalPlayers = players.length;
+
+      if (totalPlayers === 3) {
+        // Bottom center is current player
+        if (index === 0) return { x: 15, y: 50 };
+        if (index === 1) return { x: 85, y: 50 };
+      }
+
+      if (totalPlayers === 4) {
+        switch (index) {
+          case 0: return { x: 15, y: 50 };
+          case 1: return { x: 85, y: 50 };
+          case 2: return { x: 50, y: 15 };
+        }
+      }
+
+      // Default circular layout for more than 4 players
+      const angle = (2 * Math.PI * index) / (totalPlayers - 1) - Math.PI / 2;
       const radius = 35;
       return {
         x: 50 + radius * Math.cos(angle),
         y: 50 + radius * Math.sin(angle),
       };
     },
-    [otherPlayers.length]
+    [players.length]
   );
 
   useEffect(() => {
