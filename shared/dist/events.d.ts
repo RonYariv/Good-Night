@@ -28,5 +28,6 @@ export declare enum GameEvents {
     RevealRoles = "revealRoles",
     CurrentRoleTurn = "currentRoleTurn",
     GetCurrentTurn = "getCurrentTurn",
-    PlayerAction = "PlayerAction"
+    PlayerAction = "PlayerAction",
+    NightIsOver = "nightIsOver"
 }

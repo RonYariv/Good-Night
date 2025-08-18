@@ -162,9 +162,9 @@ export class RoomGateway
 
       // 4. Emit current turn
       const currentRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
-      if(!currentRole){
-        console.log("No current role found");
-        return { success: false, error: "No current role found" };
+      if (!currentRole) {
+        this.server.to(data.gameCode).emit(GameEvents.NightIsOver);
+        return { success: true };
       }
       this.server.to(data.gameCode).emit(GameEvents.CurrentRoleTurn, currentRole);
 
@@ -192,13 +192,13 @@ export class RoomGateway
       const currentRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
 
       if (!currentRole) {
-        client.emit(RoomEvents.Error, { message: "No current role found" });
-        return { success: false, error: "No current role found" };
+        this.server.to(data.gameCode).emit(GameEvents.NightIsOver);
+        return { success: true };
       }
 
       client.join(data.gameCode);
 
-      // 👇 Only emit to the requesting client
+      // Only emit to the requesting client
       client.emit(GameEvents.CurrentRoleTurn, currentRole);
 
       return { success: true, currentRoleId: currentRole.id };
@@ -218,7 +218,6 @@ export class RoomGateway
     try {
       // Check if it is this player's turn before processing
       if (this.gameManagmentService.isYourTurn(data.gameCode, data.playerId)) {
-        console.log('Processing player action:', data);
         client.emit(RoomEvents.Error, { message: 'Not your turn' });
         return { success: false, error: 'Not your turn' };
       }
@@ -226,9 +225,9 @@ export class RoomGateway
       // Get the next player's turn after processing
       const nextRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
 
-       if (!nextRole) {
-        client.emit(RoomEvents.Error, { message: "No current role found" });
-        return { success: false, error: "No current role found" };
+      if (!nextRole) {
+        this.server.to(data.gameCode).emit(GameEvents.NightIsOver);
+        return { success: true };
       }
 
       // Broadcast current turn to all players in the room

@@ -20,6 +20,7 @@ export class GameManagementService {
     if (!game) throw new Error('Game does not exist');
 
     const currentIndex = game.currentPlayerIndex;
+    if (currentIndex >= game.players.length) return null;
 
     game.currentPlayerIndex++;
     this.games.set(gameCode, game);

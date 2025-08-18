@@ -13,6 +13,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [revealedRole, setRevealedRole] = useState<IRole | null>(null);
   const [currentTurnRole, setCurrentTurnRole] = useState<IRole | null>(null);
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
+  const [nightOver, setNightOver] = useState(false);
 
   const currentPlayer = useMemo(
     () => players.find(p => p.id === playerId),
@@ -27,13 +28,10 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const getPosition = useCallback(
     (index: number) => {
       const totalPlayers = players.length;
-
       if (totalPlayers === 3) {
-        // Bottom center is current player
         if (index === 0) return { x: 15, y: 50 };
         if (index === 1) return { x: 85, y: 50 };
       }
-
       if (totalPlayers === 4) {
         switch (index) {
           case 0: return { x: 15, y: 50 };
@@ -41,14 +39,9 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
           case 2: return { x: 50, y: 15 };
         }
       }
-
-      // Default circular layout for more than 4 players
       const angle = (2 * Math.PI * index) / (totalPlayers - 1) - Math.PI / 2;
       const radius = 35;
-      return {
-        x: 50 + radius * Math.cos(angle),
-        y: 50 + radius * Math.sin(angle),
-      };
+      return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle) };
     },
     [players.length]
   );
@@ -58,25 +51,38 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
     socketService.emit(GameEvents.GetCurrentTurn, { gameCode });
 
-    const handleRevealRoles = (data: { roles: { playerId: string; role: IRole }[] }) => {
-      const myRole = data.roles.find(r => r.playerId === playerId)?.role;
-      if (!myRole) return;
-      setRevealedRole(myRole);
-    };
+    const handlers: [string, (...args: any[]) => void][] = [
+      [
+        GameEvents.RevealRoles,
+        (data: { roles: { playerId: string; role: IRole }[] }) => {
+          const myRole = data.roles.find(r => r.playerId === playerId)?.role;
+          if (myRole) setRevealedRole(myRole);
+        },
+      ],
+      [
+        GameEvents.CurrentRoleTurn,
+        (role: IRole) => {
+          setCurrentTurnRole(role);
+          setSelectedTargets([]);
+        },
+      ],
+      [
+        GameEvents.NightIsOver,
+        () => {
+          setNightOver(true);
+          setCurrentTurnRole(null);
+        },
+      ],
+    ];
 
-    const handleCurrentTurn = (role: IRole) => {
-      setCurrentTurnRole(role);
-      setSelectedTargets([]);
-    };
+    handlers.forEach(([event, fn]) => socketService.on(event, fn));
 
-    socketService.on(GameEvents.RevealRoles, handleRevealRoles);
-    socketService.on(GameEvents.CurrentRoleTurn, handleCurrentTurn);
-
+    // Cleanup
     return () => {
-      socketService.off(GameEvents.RevealRoles, handleRevealRoles);
-      socketService.off(GameEvents.CurrentRoleTurn, handleCurrentTurn);
+      handlers.forEach(([event, fn]) => socketService.off(event, fn));
     };
   }, [playerId, gameCode]);
+
 
   const handleSelect = (targetId: string, targetType: TargetType) => {
     if (!currentTurnRole || !currentTurnRole.targetTypes.includes(targetType)) return;
@@ -100,7 +106,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     setSelectedTargets([]);
   };
 
-  const canAct = currentTurnRole?.id === revealedRole?.id;
+  const canAct = !nightOver && currentTurnRole?.id === revealedRole?.id;
   const isValidSelection = selectedTargets.length === (currentTurnRole?.maxTargets || 0);
 
   const renderCard = (player: IPlayer) => {
@@ -114,9 +120,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         onClick={() => canAct && handleSelect(player.id, TargetType.Player)}
       >
         {player.id === playerId && revealedRole && (
-          <div className="role-text">
-            {revealedRole.name}
-          </div>
+          <div className="role-text">{revealedRole.name}</div>
         )}
       </div>
     );
@@ -124,9 +128,9 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
   return (
     <div className="table-container">
-      {currentTurnRole && (
-        <div className="turn-text">{currentTurnRole.name} wake up</div>
-      )}
+      <div className="turn-text">
+        {nightOver ? "Good morning!" : currentTurnRole?.name + " wake up"}
+      </div>
 
       <div className="table">
         <div className="community-cards">
@@ -168,7 +172,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         })}
       </div>
 
-      {canAct && (
+      {canAct && !nightOver && (
         <div className="action-container">
           <button
             className="done-button"

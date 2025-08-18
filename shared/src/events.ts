@@ -27,8 +27,9 @@ export enum ChatEvents {
 }
 
 export enum GameEvents {
-  RevealRoles = "revealRoles",
+  RevealRoles = 'revealRoles',
   CurrentRoleTurn = 'currentRoleTurn',
   GetCurrentTurn = 'getCurrentTurn',
-  PlayerAction = "PlayerAction",
+  PlayerAction = 'PlayerAction',
+  NightIsOver = 'nightIsOver',
 }

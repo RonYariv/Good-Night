@@ -32,4 +32,5 @@ export var GameEvents;
     GameEvents["CurrentRoleTurn"] = "currentRoleTurn";
     GameEvents["GetCurrentTurn"] = "getCurrentTurn";
     GameEvents["PlayerAction"] = "PlayerAction";
+    GameEvents["NightIsOver"] = "nightIsOver";
 })(GameEvents || (GameEvents = {}));
