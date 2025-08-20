@@ -1,6 +1,6 @@
 # Real-Time Multiplayer Game Platform
 
-This project is a real-time multiplayer game platform built with **React** on the client side and **Node.js (Socket.IO)** on the server side.  
+An interactive, real-time implementation of the classic **Werewolf / Mafia social game**, built with **React + TypeScript + Socket.IO + Node.js**.  
 It allows players to join rooms, get assigned roles, and participate in games with dynamic, real-time interactions.
 
 ---
