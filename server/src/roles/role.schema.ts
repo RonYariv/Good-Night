@@ -16,7 +16,7 @@ export class Role {
   nightOrder: number;
 
   @Prop({ required: true, enum: RoleAction })
-  action: RoleAction;
+  actionType: RoleAction;
 
   @Prop({ default: 0 })
   maxTargets: number;

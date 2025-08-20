@@ -31,6 +31,7 @@ export var GameEvents;
     GameEvents["RevealRoles"] = "revealRoles";
     GameEvents["CurrentRoleTurn"] = "currentRoleTurn";
     GameEvents["GetCurrentTurn"] = "getCurrentTurn";
-    GameEvents["PlayerAction"] = "PlayerAction";
+    GameEvents["PlayerAction"] = "playerAction";
+    GameEvents["PlayerActionInfo"] = "playerActionInfo";
     GameEvents["NightIsOver"] = "nightIsOver";
 })(GameEvents || (GameEvents = {}));

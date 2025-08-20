@@ -1,4 +1,4 @@
-import { GameEvents, type IPlayer, type IRole, TargetType } from "@myorg/shared";
+import { GameEvents, type IPlayer, type IRole, type PlayerActionResult, TargetType } from "@myorg/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./GameTable.css";
 import { socketService } from "./services/socket.service";
@@ -75,6 +75,12 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
           setCurrentTurnRole(null);
         },
       ],
+      [
+        GameEvents.PlayerActionInfo,
+        (info: PlayerActionResult["info"]) => {
+          console.log("PlayerActionInfo received:", info);
+        },
+      ],
     ];
 
     handlers.forEach(([event, fn]) => socketService.on(event, fn));
@@ -102,8 +108,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     socketService.emit(GameEvents.PlayerAction, {
       gameCode,
       playerId,
-      roleId: currentTurnRole.id,
-      targets: selectedTargets,
+      targetsIds: selectedTargets,
     });
     setSelectedTargets([]);
   };
@@ -113,13 +118,15 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
   const renderCard = (player: IPlayer) => {
     const isSelected = selectedTargets.includes(player.id);
+    const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
+
     return (
       <div
         role="button"
         tabIndex={0}
         aria-pressed={isSelected}
         className={`card-placeholder ${isSelected ? "selected" : ""}`}
-        onClick={() => canAct && handleSelect(player.id, TargetType.Player)}
+        onClick={() => canAct && handleSelect(player.id, targetType)}
       >
         {player.id === playerId && revealedRole && (
           <div className="role-text">{revealedRole.name}</div>
@@ -127,6 +134,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
       </div>
     );
   };
+
 
   return (
     <div className="table-container">

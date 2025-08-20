@@ -217,15 +217,18 @@ export class RoomGateway
 
   @SubscribeMessage(GameEvents.PlayerAction)
   async handlePlayerAction(
-    @MessageBody() data: { gameCode: string; playerId: string; action: any },
+    @MessageBody() data: { gameCode: string; playerId: string; targetsIds: string[] },
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      // Check if it is this player's turn before processing
       if (!this.gameManagmentService.isYourTurn(data.gameCode, data.playerId)) {
         client.emit(RoomEvents.Error, { message: 'Not your turn' });
         return { success: false, error: 'Not your turn' };
       }
+
+      const {info} = this.gameManagmentService.handlePlayerAction(data.gameCode, data.playerId, data.targetsIds);
+
+      client.emit(GameEvents.PlayerActionInfo, info);
 
       // Get the next player's turn after processing
       const nextRole = this.gameManagmentService.advanceRoleTurnByRoomId(data.gameCode);

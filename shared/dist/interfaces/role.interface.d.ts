@@ -1,4 +1,4 @@
-import { TargetType } from "../enums/role.enum";
+import { RoleAction, TargetType } from "../enums/role.enum";
 import { WinCondition } from "../enums/winCondition.enum";
 export interface IRole {
     id: string;
@@ -7,4 +7,5 @@ export interface IRole {
     winCondition: WinCondition;
     targetTypes: TargetType[];
     maxTargets: number;
+    actionType: RoleAction;
 }
