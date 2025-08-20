@@ -1,12 +1,14 @@
 // services/socketService.ts
 import { io, Socket } from 'socket.io-client';
 
+const SOCKET_URL = import.meta.env.VITE_SOCKET_SERVER_URL as string;
+
 class SocketService {
   socket: Socket | null = null;
 
   connect() {
     if (this.socket?.connected) return;
-    this.socket = io("http://localhost:3000/rooms", { autoConnect: false });
+    this.socket = io(SOCKET_URL, { autoConnect: false });
     this.socket.connect();
   }
 
