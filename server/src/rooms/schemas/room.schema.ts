@@ -43,9 +43,9 @@ RoomSchema.virtual('id').get(function () {
 RoomSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,   // optionally hide __v
-  transform: function (doc, ret) {
-    delete ret._id; // optionally remove _id as well
-  },
+  transform: function (doc, ret: any) {
+    delete ret._id;
+  }
 });
 
 RoomSchema.set('toObject', {

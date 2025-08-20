@@ -5,7 +5,7 @@ import { RoleAction, TargetType, WinCondition } from '@myorg/shared';
 @Schema({ timestamps: true })
 export class Role {
   id: string;
-  
+
   @Prop({ required: true })
   name: string;
 
@@ -36,9 +36,9 @@ RoleSchema.virtual('id').get(function () {
 RoleSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,   // optionally hide __v
-  transform: function (doc, ret) {
-    delete ret._id; // optionally remove _id as well
-  },
+  transform: function (doc, ret: any) {
+    delete ret._id;
+  }
 });
 
 RoleSchema.set('toObject', {
