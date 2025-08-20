@@ -47,7 +47,9 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   );
 
   useEffect(() => {
-    if (!socketService.socket) socketService.connect();
+    if (!socketService.socket) {
+      socketService.connect();
+    }
 
     socketService.emit(GameEvents.GetCurrentTurn, { gameCode });
 
@@ -62,6 +64,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
       [
         GameEvents.CurrentRoleTurn,
         (role: IRole) => {
+          console.log("hi, im here");
           setCurrentTurnRole(role);
           setSelectedTargets([]);
         },

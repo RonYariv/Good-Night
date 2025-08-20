@@ -24,6 +24,7 @@ export function RoomPage() {
 
   useEffect(() => {
     socketService.connect();
+
     socketService.emit(RoomEvents.RoomByGameCode, { gameCode });
 
     const handlers: [string, (data: any) => void][] = [
@@ -34,16 +35,13 @@ export function RoomPage() {
       [ChatEvents.NewMessage, (message: IChatMessage) =>
         setMessages((prev) => [...prev, message])
       ],
-      [RoomEvents.GameStarted, () => {
-        console.log("Game started!");
-        navigate(`/game/${gameCode}`, {
-          state: {
-            players,
-            playerId,
-            gameCode
-          }
-        })
-      }
+      [RoomEvents.GameStarted, () => navigate(`/game/${gameCode}`, {
+        state: {
+          players,
+          playerId,
+          gameCode
+        }
+      })
       ],
     ];
 

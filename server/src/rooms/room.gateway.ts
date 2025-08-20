@@ -188,6 +188,7 @@ export class RoomGateway
     @MessageBody() data: { gameCode: string },
     @ConnectedSocket() client: Socket,
   ) {
+    console.log("hello");
     try {
       const currentRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
 
