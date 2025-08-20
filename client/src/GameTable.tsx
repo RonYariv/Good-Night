@@ -57,14 +57,13 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
       [
         GameEvents.RevealRoles,
         (data: { roles: { playerId: string; role: IRole }[] }) => {
-          const myRole = data.roles.find(r => r.playerId === playerId)?.role;
+          const myRole = data.roles?.find(r => r.playerId === playerId)?.role;
           if (myRole) setRevealedRole(myRole);
         },
       ],
       [
         GameEvents.CurrentRoleTurn,
         (role: IRole) => {
-          console.log("hi, im here");
           setCurrentTurnRole(role);
           setSelectedTargets([]);
         },

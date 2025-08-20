@@ -161,7 +161,7 @@ export class RoomGateway
       const playersWithRoles: IPlayer[] = await this.gameManagmentService.startGame(data.gameCode, room.players);
 
       // 4. Emit current turn
-      const currentRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
+      const currentRole = this.gameManagmentService.getRoleTurnByRoomId(data.gameCode);
       if (!currentRole) {
         this.server.to(data.gameCode).emit(GameEvents.NightIsOver);
         return { success: true };
@@ -188,18 +188,22 @@ export class RoomGateway
     @MessageBody() data: { gameCode: string },
     @ConnectedSocket() client: Socket,
   ) {
-    console.log("hello");
     try {
-      const currentRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
-
+      client.join(data.gameCode);
+      
+      const game = this.gameManagmentService.getGameByCode(data.gameCode);
+      const rolesData = game?.players.map(p => ({
+        playerId: p.id,
+        role: p.currentRole,
+      }));
+      client.emit(GameEvents.RevealRoles, { roles: rolesData });
+      
+      const currentRole = this.gameManagmentService.getRoleTurnByRoomId(data.gameCode);
       if (!currentRole) {
-        this.server.to(data.gameCode).emit(GameEvents.NightIsOver);
+        client.emit(GameEvents.NightIsOver);
         return { success: true };
       }
 
-      client.join(data.gameCode);
-
-      // Only emit to the requesting client
       client.emit(GameEvents.CurrentRoleTurn, currentRole);
 
       return { success: true, currentRoleId: currentRole.id };
@@ -218,13 +222,13 @@ export class RoomGateway
   ) {
     try {
       // Check if it is this player's turn before processing
-      if (this.gameManagmentService.isYourTurn(data.gameCode, data.playerId)) {
+      if (!this.gameManagmentService.isYourTurn(data.gameCode, data.playerId)) {
         client.emit(RoomEvents.Error, { message: 'Not your turn' });
         return { success: false, error: 'Not your turn' };
       }
 
       // Get the next player's turn after processing
-      const nextRole = this.gameManagmentService.getCurrentRoleTurnByRoomId(data.gameCode);
+      const nextRole = this.gameManagmentService.advanceRoleTurnByRoomId(data.gameCode);
 
       if (!nextRole) {
         this.server.to(data.gameCode).emit(GameEvents.NightIsOver);

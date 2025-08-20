@@ -14,21 +14,34 @@ export class GameManagementService {
 
   constructor(private readonly roleService: RoleService) { };
 
-
-  getCurrentRoleTurnByRoomId(gameCode: string) {
+  private _getRoleTurn(gameCode: string, advance = false) {
     const game = this.games.get(gameCode);
     if (!game) throw new Error('Game does not exist');
 
-    const currentIndex = game.currentPlayerIndex;
+    let currentIndex = game.currentPlayerIndex;
+
+    if (advance) {
+      currentIndex++;
+      game.currentPlayerIndex = currentIndex;
+      this.games.set(gameCode, game);
+    }
+
     if (currentIndex >= game.players.length) return null;
 
-    game.currentPlayerIndex++;
-    this.games.set(gameCode, game);
-
     const currentPlayer = game.players[currentIndex];
-
-    // Return the role if it exists and has nightOrder
     return currentPlayer.currentRole?.nightOrder != null ? currentPlayer.currentRole : null;
+  }
+
+  getGameByCode(gameCode: string): GameState | undefined {
+    return this.games.get(gameCode);
+  }
+
+  getRoleTurnByRoomId(gameCode: string) {
+    return this._getRoleTurn(gameCode, false);
+  }
+
+  advanceRoleTurnByRoomId(gameCode: string) {
+    return this._getRoleTurn(gameCode, true);
   }
 
 
@@ -36,12 +49,13 @@ export class GameManagementService {
     const game = this.games.get(gameCode);
     if (!game) return false;
 
-    const currentIndex = game.currentPlayerIndex;
-    const currentPlayer = game.players[currentIndex];
-    if (!currentPlayer?.currentRole) return false;
+    const currentRole = this._getRoleTurn(gameCode, false);
+    if (!currentRole) return false;
+    
+    const playerRole = game.players.find(p => p.id === playerId)?.currentRole;
+    if (!playerRole) return false;
 
-    const playerRoleId = game.players.find(p => p.id === playerId)?.currentRole?.id;
-    return playerRoleId === currentPlayer.currentRole.id;
+    return playerRole.id === currentRole.id;
   }
 
 
