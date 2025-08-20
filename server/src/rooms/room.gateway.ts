@@ -17,7 +17,7 @@ import { RoomService } from './room.service';
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:5173', 'https://admin.socket.io'],
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
   },
   namespace: '/rooms',
