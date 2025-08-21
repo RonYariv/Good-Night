@@ -146,12 +146,12 @@ export class RoomGateway
 
   @SubscribeMessage(RoomEvents.StartGame)
   async handleStartGame(
-    @MessageBody() data: { gameCode: string },
+    @MessageBody() data: { gameCode: string, playerId: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
       // 1. Update room status
-      const room = await this.roomService.updateRoomStatus(data.gameCode, 'playing');
+      const room = await this.roomService.updateRoomStatus(data.gameCode, 'playing', data.playerId);
 
       // 2. Emit general events
       this.server.to(data.gameCode).emit(RoomEvents.GameStarted, room);

@@ -93,8 +93,11 @@ export class RoomService {
     return room.save();
   }
 
-  async updateRoomStatus(roomId: string, status: RoomStatus): Promise<RoomDocument> {
+  async updateRoomStatus(roomId: string, status: RoomStatus, playerId?:string): Promise<RoomDocument> {
     const room = await this.getRoomByGameCode(roomId);
+    if(playerId && room.host !== playerId) {
+      throw new BadRequestException('Only the host can start the game');
+    }
     room.status = status;
     return room.save();
   }

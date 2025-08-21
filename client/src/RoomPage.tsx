@@ -9,13 +9,18 @@ interface Player {
   name: string;
 }
 
+interface Room {
+  players: Player[];
+  host?: string;
+}
+
 export function RoomPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const playerId = location.state?.playerId || null;
   const { gameCode } = useParams<{ gameCode: string }>();
 
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [room, setRoom] = useState<Room>({ players: [] });
   const [copied, setCopied] = useState(false);
 
   const [messages, setMessages] = useState<IChatMessage[]>([]);
@@ -24,38 +29,39 @@ export function RoomPage() {
 
   useEffect(() => {
     socketService.connect();
-
     socketService.emit(RoomEvents.RoomByGameCode, { gameCode });
 
     const handlers: [string, (data: any) => void][] = [
-      [RoomEvents.RoomData, (room) => setPlayers(room.players)],
-      [RoomEvents.PlayerJoined, ({ room }) => setPlayers(room.players)],
-      [RoomEvents.PlayerLeft, ({ room }) => setPlayers(room.players)],
+      [RoomEvents.RoomData, (room) => setRoom(room)],
+      [RoomEvents.PlayerJoined, ({ room }) => setRoom(room)],
+      [RoomEvents.PlayerLeft, ({ room }) => setRoom(room)],
       [ChatEvents.History, (history: IChatMessage[]) => setMessages(history)],
       [ChatEvents.NewMessage, (message: IChatMessage) =>
         setMessages((prev) => [...prev, message])
       ],
-      [RoomEvents.GameStarted, () => navigate(`/game/${gameCode}`, {
-        state: {
-          players,
-          playerId,
-          gameCode
-        }
-      })
+      [
+        RoomEvents.GameStarted,
+        () =>
+          navigate(`/game/${gameCode}`, {
+            state: {
+              players: room.players,
+              playerId,
+              gameCode,
+            },
+          }),
       ],
     ];
 
     handlers.forEach(([event, handler]) => socketService.on(event, handler));
-
     return () => {
       handlers.forEach(([event, handler]) =>
         socketService.off(event, handler)
       );
     };
-  }, [gameCode, navigate, playerId, players]);
+  }, [gameCode, navigate, playerId, room]);
 
   const startGame = () => {
-    socketService.emit(RoomEvents.StartGame, { gameCode });
+    socketService.emit(RoomEvents.StartGame, { gameCode, playerId });
   };
 
   const copyGameCode = () => {
@@ -97,7 +103,10 @@ export function RoomPage() {
       <button
         onClick={() => {
           if (playerId && gameCode) {
-            socketService.emit(RoomEvents.LeaveRoom, { roomId: gameCode, playerId });
+            socketService.emit(RoomEvents.LeaveRoom, {
+              roomId: gameCode,
+              playerId,
+            });
             navigate("/");
           }
         }}
@@ -108,9 +117,9 @@ export function RoomPage() {
       </button>
 
       <section className="players-section">
-        <h2 className="section-title">Players ({players.length})</h2>
+        <h2 className="section-title">Players ({room.players.length})</h2>
         <ul className="player-list">
-          {players.map((p) => (
+          {room.players.map((p) => (
             <li key={p.id} className="player-item">
               {p.name}
             </li>
@@ -126,12 +135,9 @@ export function RoomPage() {
           )}
           {messages.map((m, i) => {
             const sender =
-              players.find((p) => p.id === m.senderId)?.name || "Unknown";
+              room.players.find((p) => p.id === m.senderId)?.name || "Unknown";
             return (
-              <div
-                key={i}
-                className={"chat-message"}
-              >
+              <div key={i} className="chat-message">
                 <span className="chat-sender">{sender}:</span>{" "}
                 <span className="chat-text">{m.text}</span>
               </div>
@@ -147,17 +153,18 @@ export function RoomPage() {
             onChange={(e) => setMessageText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                e.preventDefault(); // prevent line breaks
+                e.preventDefault();
                 sendMessage();
               }
             }}
           />
         </div>
       </section>
+
       <div className="room-actions">
         <button
           onClick={startGame}
-          disabled={players.length < 2}
+          disabled={room.players.length < 3 || playerId !== room.host}
           className="btn"
         >
           Start Game
