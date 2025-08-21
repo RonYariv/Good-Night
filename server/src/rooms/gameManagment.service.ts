@@ -65,18 +65,23 @@ export class GameManagementService {
 
     const targetId = targetsIds[0];
     let newRole: IRole | null = player.currentRole;
+    const isCenterCard = targetId.startsWith("center-");
 
-    if (targetId.startsWith("center-")) {
+    if (isCenterCard) {
       const index = parseInt(targetId.split("-")[1], 10);
       [player.currentRole, game.centerRoles[index]] = [game.centerRoles[index], player.currentRole!];
-      newRole = {} as IRole;
+      newRole = player.currentRole;
     } else {
-      const targetPlayer = game.players.find(p => p.id === targetId);
+      const targetPlayer = game.players.find(p => p.id === targetId) as IPlayer;
       if (targetPlayer) {
         [player.currentRole, targetPlayer.currentRole] = [targetPlayer.currentRole, player.currentRole];
         newRole = player.currentRole;
+        targetPlayer.roleHistory.push(targetPlayer.currentRole!);
       }
     }
+
+    if (newRole) player.roleHistory.push(newRole);
+    if(isCenterCard) return {};
 
     return { swappedRole: newRole };
   }
@@ -84,16 +89,17 @@ export class GameManagementService {
 
   private handleSwapTwoAction(targetsIds: string[], game: GameState): void {
     if (targetsIds.length !== 2) return;
-    const first = game.players.find(p => p.id === targetsIds[0]);
-    const second = game.players.find(p => p.id === targetsIds[1]);
-    let swappedRoles: { [key: string]: IRole | null } = {};
+
+    const first = game.players.find(p => p.id === targetsIds[0]) as IPlayer;
+    const second = game.players.find(p => p.id === targetsIds[1]) as IPlayer;
+
     if (first && second) {
       [first.currentRole, second.currentRole] = [second.currentRole, first.currentRole];
-      swappedRoles[first.id] = first.currentRole;
-      swappedRoles[second.id] = second.currentRole;
+      if (first.currentRole) first.roleHistory.push(first.currentRole);
+      if (second.currentRole) second.roleHistory.push(second.currentRole);
     }
-    return;
   }
+
 
   private handleSwapCenterAction(targetsIds: string[], game: GameState): void {
     if (targetsIds.length !== 2) return;
@@ -140,11 +146,15 @@ export class GameManagementService {
     const centerRoles = shuffledRoles.splice(0, 3);
 
     // Assign the remaining shuffled roles to players (1 per player, no repeats)
-    const playersWithRoles = players.map((player, index) => ({
-      ...player,
-      id: player.id,
-      currentRole: shuffledRoles[index] ?? null,
-    }));
+    const playersWithRoles = players.map((player, index) => {
+      const assignedRole = shuffledRoles[index] ?? null;
+      return {
+        ...player,
+        id: player.id,
+        currentRole: assignedRole,
+        roleHistory: assignedRole ? [assignedRole] : [],
+      };
+    });
 
     // Sort players by nightOrder of their assigned role
     const sortedPlayers = playersWithRoles.sort((a, b) => {

@@ -1,14 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Role } from '../../roles/role.schema';
-
-@Schema({ _id: false })
-export class PlayerRoleHistory {
-  @Prop({ required: true })
-  roleId: string;
-
-  @Prop({ required: true })
-  assignedAt: number;
-}
+import { IRole } from '@myorg/shared';
 
 @Schema({ _id: false })
 export class Player {
@@ -22,8 +14,8 @@ export class Player {
   currentRole: Role | null;
 
 
-  @Prop({ type: [SchemaFactory.createForClass(PlayerRoleHistory)], default: [] })
-  roleHistory: PlayerRoleHistory[];
+  @Prop({ type: [Role], default: [] })
+  roleHistory: IRole[];
 }
 
 export const PlayerSchema = SchemaFactory.createForClass(Player);

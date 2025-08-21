@@ -194,7 +194,7 @@ export class RoomGateway
       const game = this.gameManagmentService.getGameByCode(data.gameCode);
       const rolesData = game?.players.map(p => ({
         playerId: p.id,
-        role: p.currentRole,
+        role: p.roleHistory[0],
       }));
       client.emit(GameEvents.RevealRoles, { roles: rolesData });
       
