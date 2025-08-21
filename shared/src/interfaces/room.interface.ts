@@ -4,7 +4,6 @@ export type RoomStatus = 'waiting' | 'playing' | 'finished';
 
 export interface IRoom {
     id: string;
-    name: string;
     host: string; // player id of host
     maxPlayers: number;
     currentPlayers: number;

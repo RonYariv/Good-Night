@@ -5,7 +5,7 @@ import "./Lobby.css";
 import { RoomEvents } from "@myorg/shared";
 
 export function Lobby() {
-  const [roomName, setRoomName] = useState("");
+  const [hostName, setHostName] = useState("");
   const [playerName, setPlayerName] = useState("");
   const [joinRoomId, setJoinRoomId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -13,13 +13,16 @@ export function Lobby() {
 
   useEffect(() => {
     socketService.connect();
+    
+    socketService.on(RoomEvents.Error, (error) => setError(error.message));
+
     return () => socketService.disconnect();
   }, []);
 
   const createRoom = () => {
-    if (!roomName) return setError("Room name is required");
+    if (!hostName) return setError("name is required");
 
-    socketService.emit(RoomEvents.CreateRoom, { name: roomName });
+    socketService.emit(RoomEvents.CreateRoom, { name: hostName });
     socketService.once(RoomEvents.RoomCreated, (room) => {
       setError(null);
       navigate(`/room/${room.gameCode}`, { state: { playerId: room.host } });
@@ -45,9 +48,9 @@ export function Lobby() {
         <h2 className="section-title">Create Room</h2>
         <input
           type="text"
-          placeholder="Room name"
-          value={roomName}
-          onChange={(e) => setRoomName(e.target.value)}
+          placeholder="Host name"
+          value={hostName}
+          onChange={(e) => setHostName(e.target.value)}
           className="input-field"
         />
         <button onClick={createRoom} className="btn btn-create">

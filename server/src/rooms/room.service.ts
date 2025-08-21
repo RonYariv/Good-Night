@@ -13,9 +13,8 @@ export class RoomService {
   ) { }
 
   async createRoom(createRoomDto: CreateRoomDto): Promise<RoomDocument> {
-    const host: IPlayer = { id: randomUUID(), name: "host", currentRole: null, roleHistory: [] };
+    const host: IPlayer = { id: randomUUID(), name: createRoomDto.name, currentRole: null, roleHistory: [] };
     const room: RoomDocument = new this.roomModel({
-      ...createRoomDto,
       host: host.id,
       gameCode: this.generateGameCode(),
       maxPlayers: 6,

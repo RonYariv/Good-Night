@@ -7,9 +7,6 @@ export type RoomDocument = Room & Document;
 @Schema({ timestamps: true })
 export class Room {
   @Prop({ required: true })
-  name: string;
-
-  @Prop({ required: true })
   gameCode: string;
 
   @Prop({ required: true })
