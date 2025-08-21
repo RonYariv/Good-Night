@@ -9,4 +9,5 @@ export interface IRole {
     targetTypes: TargetType[];
     maxTargets: number;
     actionType: RoleAction;
+    canSeeTeammates: boolean;
 }

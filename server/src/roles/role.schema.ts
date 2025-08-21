@@ -23,6 +23,9 @@ export class Role {
 
   @Prop({ type: [String], enum: TargetType, default: [] })
   targetTypes: TargetType[];
+
+  @Prop({ type: Boolean, default: false })
+  canSeeTeammates: boolean;
 }
 
 export type RoleDocument = Role & Document;

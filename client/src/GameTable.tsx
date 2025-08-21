@@ -11,7 +11,7 @@ interface GameTableProps {
 
 export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [revealedRole, setRevealedRole] = useState<IRole | null>(null);
-  const [seenRolesMap, setSeenRolesMap] = useState<Record<string, IRole>>({});
+  const [knownRolesMap, setKnownRolesMap] = useState<Record<string, IRole>>({});
   const [currentTurnRole, setCurrentTurnRole] = useState<IRole | null>(null);
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [nightOver, setNightOver] = useState(false);
@@ -60,6 +60,15 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         (data: { roles: { playerId: string; role: IRole }[] }) => {
           const myRole = data.roles?.find(r => r.playerId === playerId)?.role;
           if (myRole) setRevealedRole(myRole);
+          if (myRole?.canSeeTeammates) {
+            const teamMates = data.roles.filter(r => r.role.id === myRole.id && r.playerId !== playerId);
+            const teamMap: Record<string, IRole> = {};
+            for (const mate of teamMates) {
+              teamMap[mate.playerId] = mate.role;
+            }
+
+            setKnownRolesMap(prev => ({ ...prev, ...teamMap }));
+          }
         },
       ],
       [
@@ -87,7 +96,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
               const targetId = targetsIds[index];
               newSeenRoles[targetId] = role;
             });
-            setSeenRolesMap(prev => ({ ...prev, ...newSeenRoles }));
+            setKnownRolesMap(prev => ({ ...prev, ...newSeenRoles }));
           }
 
           if (info?.swappedRole) {
@@ -153,7 +162,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const renderPlayerCard = (player: IPlayer) => {
     const isSelected = selectedTargets.includes(player.id);
     const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
-    const roleToShow = player.id === playerId ? revealedRole : seenRolesMap[player.id];
+    const roleToShow = player.id === playerId ? revealedRole : knownRolesMap[player.id];
 
     return (
       <Card
@@ -168,7 +177,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const renderCenterCard = (index: number) => {
     const cardId = `center-${index}`;
     const isSelected = selectedTargets.includes(cardId);
-    const roleToShow = seenRolesMap[cardId];
+    const roleToShow = knownRolesMap[cardId];
 
     return (
       <Card
