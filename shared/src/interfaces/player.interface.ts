@@ -4,6 +4,6 @@ import { IRole } from "./role.interface";
     id: string;
     name: string;
     currentRole: IRole | null;
-    roleHistory: IRole[] | null;
+    roleHistory: IRole[];
   }
   

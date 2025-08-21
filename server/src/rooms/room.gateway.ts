@@ -171,7 +171,7 @@ export class RoomGateway
       // 5. Emit all roles
       const rolesData = playersWithRoles.map(p => ({
         playerId: p.id,
-        role: p.currentRole,
+        role: p.roleHistory[0],
       }));
       this.server.to(data.gameCode).emit(GameEvents.RevealRoles, { roles: rolesData });
 

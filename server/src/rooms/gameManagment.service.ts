@@ -25,11 +25,11 @@ export class GameManagementService {
 
     while (game.currentPlayerIndex < game.players.length) {
       const currentPlayer = game.players[game.currentPlayerIndex];
-      const role = currentPlayer.currentRole;
+      const initialRole = currentPlayer.roleHistory[0];
 
-      if (role && role.nightOrder != null && !game.usedRoleIds.has(role.id)) {
+      if (initialRole && initialRole.nightOrder != null && !game.usedRoleIds.has(initialRole.id)) {
         this.games.set(gameCode, game);
-        return role;
+        return initialRole;
       }
 
       game.currentPlayerIndex++;
@@ -81,7 +81,7 @@ export class GameManagementService {
     }
 
     if (newRole) player.roleHistory.push(newRole);
-    if(isCenterCard) return {};
+    if (isCenterCard) return {};
 
     return { swappedRole: newRole };
   }
@@ -129,10 +129,10 @@ export class GameManagementService {
     const currentRole = this._getRoleTurn(gameCode, false);
     if (!currentRole) return false;
 
-    const playerRole = game.players.find(p => p.id === playerId)?.currentRole;
-    if (!playerRole) return false;
+    const playerInitialRole = game.players.find(p => p.id === playerId)?.roleHistory[0];
+    if (!playerInitialRole) return false;
 
-    return playerRole.id === currentRole.id;
+    return playerInitialRole.id === currentRole.id;
   }
 
 
@@ -178,10 +178,10 @@ export class GameManagementService {
     if (!game) throw new Error('Game not started or does not exist');
 
     const player = game.players.find(p => p.id === playerId);
-    if (!player || !player.currentRole) throw new Error('Player or role not found');
-    const originalRole = player.currentRole;
+    if (!player || !player.roleHistory[0]) throw new Error('Player or role not found');
+    const originalRole = player.roleHistory[0];
 
-    const actionType = player.currentRole.actionType;
+    const actionType = player.roleHistory[0].actionType;
     let info: PlayerActionResult['info'] = {};
 
     switch (actionType) {
