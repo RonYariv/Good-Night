@@ -226,9 +226,9 @@ export class RoomGateway
         return { success: false, error: 'Not your turn' };
       }
 
-      const {info} = this.gameManagmentService.handlePlayerAction(data.gameCode, data.playerId, data.targetsIds);
+      const actionResult = this.gameManagmentService.handlePlayerAction(data.gameCode, data.playerId, data.targetsIds);
 
-      client.emit(GameEvents.PlayerActionInfo, info);
+      client.emit(GameEvents.PlayerActionInfo, actionResult);
 
       // Get the next player's turn after processing
       const nextRole = this.gameManagmentService.advanceRoleTurnByRoomId(data.gameCode);

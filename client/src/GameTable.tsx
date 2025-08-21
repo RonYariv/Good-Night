@@ -11,6 +11,7 @@ interface GameTableProps {
 
 export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [revealedRole, setRevealedRole] = useState<IRole | null>(null);
+  const [seenRolesMap, setSeenRolesMap] = useState<Record<string, IRole>>({});
   const [currentTurnRole, setCurrentTurnRole] = useState<IRole | null>(null);
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [nightOver, setNightOver] = useState(false);
@@ -77,8 +78,21 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
       ],
       [
         GameEvents.PlayerActionInfo,
-        (info: PlayerActionResult["info"]) => {
-          console.log("PlayerActionInfo received:", info);
+        (res: PlayerActionResult) => {
+          const { info, targetsIds } = res;
+
+          if (info?.seenRoles) {
+            const newSeenRoles: Record<string, IRole> = {};
+            info.seenRoles.forEach((role: IRole, index: number) => {
+              const targetId = targetsIds[index];
+              newSeenRoles[targetId] = role;
+            });
+            setSeenRolesMap(prev => ({ ...prev, ...newSeenRoles }));
+          }
+
+          if (info?.swappedRole) {
+            setRevealedRole(info.swappedRole);
+          }
         },
       ],
     ];
@@ -119,6 +133,10 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const renderCard = (player: IPlayer) => {
     const isSelected = selectedTargets.includes(player.id);
     const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
+    const roleToShow =
+      player.id === playerId
+        ? revealedRole
+        : seenRolesMap[player.id];
 
     return (
       <div
@@ -128,12 +146,13 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         className={`card-placeholder ${isSelected ? "selected" : ""}`}
         onClick={() => canAct && handleSelect(player.id, targetType)}
       >
-        {player.id === playerId && revealedRole && (
-          <div className="role-text">{revealedRole.name}</div>
+        {roleToShow && (
+          <div className="role-text">{roleToShow.name}</div>
         )}
       </div>
     );
   };
+
 
 
   return (
@@ -147,6 +166,8 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
           {Array.from({ length: 3 }).map((_, i) => {
             const cardId = `center-${i}`;
             const isSelected = selectedTargets.includes(cardId);
+            const roleToShow = seenRolesMap[cardId];
+
             return (
               <div
                 key={cardId}
@@ -155,10 +176,15 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
                 aria-pressed={isSelected}
                 className={`card-placeholder ${isSelected ? "selected" : ""}`}
                 onClick={() => canAct && handleSelect(cardId, TargetType.Center)}
-              />
+              >
+                {roleToShow && (
+                  <div className="role-text">{roleToShow.name}</div>
+                )}
+              </div>
             );
           })}
         </div>
+
 
         {currentPlayer && (
           <div className="player-slot player-self">

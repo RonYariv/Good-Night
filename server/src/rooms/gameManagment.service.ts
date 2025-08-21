@@ -6,6 +6,7 @@ interface GameState {
   currentPlayerIndex: number;
   players: IPlayer[];
   centerRoles: IRole[];
+  usedRoleIds: Set<string>;
 }
 
 @Injectable()
@@ -14,23 +15,30 @@ export class GameManagementService {
 
   constructor(private readonly roleService: RoleService) { };
 
-  private _getRoleTurn(gameCode: string, advance = false) {
+  private _getRoleTurn(gameCode: string, advance = false): IRole | null {
     const game = this.games.get(gameCode);
     if (!game) throw new Error('Game does not exist');
 
-    let currentIndex = game.currentPlayerIndex;
-
     if (advance) {
-      currentIndex++;
-      game.currentPlayerIndex = currentIndex;
-      this.games.set(gameCode, game);
+      game.currentPlayerIndex++;
     }
 
-    if (currentIndex >= game.players.length) return null;
+    while (game.currentPlayerIndex < game.players.length) {
+      const currentPlayer = game.players[game.currentPlayerIndex];
+      const role = currentPlayer.currentRole;
 
-    const currentPlayer = game.players[currentIndex];
-    return currentPlayer.currentRole?.nightOrder != null ? currentPlayer.currentRole : null;
+      if (role && role.nightOrder != null && !game.usedRoleIds.has(role.id)) {
+        this.games.set(gameCode, game);
+        return role;
+      }
+
+      game.currentPlayerIndex++;
+    }
+
+    return null;
   }
+
+
 
   private handleNoneAction(): PlayerActionResult['info'] {
     return {};
@@ -148,7 +156,8 @@ export class GameManagementService {
     const gameState: GameState = {
       currentPlayerIndex: 0,
       players: sortedPlayers,
-      centerRoles
+      centerRoles,
+      usedRoleIds: new Set(),
     };
     this.games.set(gameCode, gameState);
     return sortedPlayers;
@@ -160,6 +169,7 @@ export class GameManagementService {
 
     const player = game.players.find(p => p.id === playerId);
     if (!player || !player.currentRole) throw new Error('Player or role not found');
+    const originalRole = player.currentRole;
 
     const actionType = player.currentRole.actionType;
     let info: PlayerActionResult['info'] = {};
@@ -184,8 +194,9 @@ export class GameManagementService {
         throw new Error(`Unknown action type: ${actionType}`);
     }
 
+    game.usedRoleIds.add(originalRole.id);
     this.games.set(gameCode, game);
 
-    return { gameCode, playerId, action: actionType, info };
+    return { gameCode, playerId, action: actionType, info, targetsIds };
   }
 }
