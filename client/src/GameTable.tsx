@@ -130,30 +130,55 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const canAct = !nightOver && currentTurnRole?.id === revealedRole?.id;
   const isValidSelection = selectedTargets.length === (currentTurnRole?.maxTargets || 0);
 
-  const renderCard = (player: IPlayer) => {
+  const Card = ({
+    role,
+    isSelected,
+    onClick,
+  }: {
+    role?: IRole;
+    isSelected: boolean;
+    onClick: () => void;
+  }) => (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      className={`card-placeholder ${isSelected ? "selected" : ""}`}
+      onClick={onClick}
+    >
+      {role && <div className="role-text">{role.name}</div>}
+    </div>
+  );
+
+  const renderPlayerCard = (player: IPlayer) => {
     const isSelected = selectedTargets.includes(player.id);
     const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
-    const roleToShow =
-      player.id === playerId
-        ? revealedRole
-        : seenRolesMap[player.id];
+    const roleToShow = player.id === playerId ? revealedRole : seenRolesMap[player.id];
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        aria-pressed={isSelected}
-        className={`card-placeholder ${isSelected ? "selected" : ""}`}
+      <Card
+        key={player.id}
+        role={roleToShow!}
+        isSelected={isSelected}
         onClick={() => canAct && handleSelect(player.id, targetType)}
-      >
-        {roleToShow && (
-          <div className="role-text">{roleToShow.name}</div>
-        )}
-      </div>
+      />
     );
   };
 
+  const renderCenterCard = (index: number) => {
+    const cardId = `center-${index}`;
+    const isSelected = selectedTargets.includes(cardId);
+    const roleToShow = seenRolesMap[cardId];
 
+    return (
+      <Card
+        key={cardId}
+        role={roleToShow}
+        isSelected={isSelected}
+        onClick={() => canAct && handleSelect(cardId, TargetType.Center)}
+      />
+    );
+  };
 
   return (
     <div className="table-container">
@@ -163,33 +188,13 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
       <div className="table">
         <div className="community-cards">
-          {Array.from({ length: 3 }).map((_, i) => {
-            const cardId = `center-${i}`;
-            const isSelected = selectedTargets.includes(cardId);
-            const roleToShow = seenRolesMap[cardId];
-
-            return (
-              <div
-                key={cardId}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isSelected}
-                className={`card-placeholder ${isSelected ? "selected" : ""}`}
-                onClick={() => canAct && handleSelect(cardId, TargetType.Center)}
-              >
-                {roleToShow && (
-                  <div className="role-text">{roleToShow.name}</div>
-                )}
-              </div>
-            );
-          })}
+          {Array.from({ length: 3 }).map((_, i) => renderCenterCard(i))}
         </div>
-
 
         {currentPlayer && (
           <div className="player-slot player-self">
             <div className="player-name">{currentPlayer.name}</div>
-            {renderCard(currentPlayer)}
+            {renderPlayerCard(currentPlayer)}
           </div>
         )}
 
@@ -202,23 +207,25 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
               style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
             >
               <div className="player-name">{player.name}</div>
-              {renderCard(player)}
+              {renderPlayerCard(player)}
             </div>
           );
         })}
       </div>
 
-      {canAct && !nightOver && (
-        <div className="action-container">
-          <button
-            className="done-button"
-            onClick={handleDone}
-            disabled={!isValidSelection}
-          >
-            Done
-          </button>
-        </div>
-      )}
-    </div>
+      {
+        canAct && !nightOver && (
+          <div className="action-container">
+            <button
+              className="done-button"
+              onClick={handleDone}
+              disabled={!isValidSelection}
+            >
+              Done
+            </button>
+          </div>
+        )
+      }
+    </div >
   );
 }
