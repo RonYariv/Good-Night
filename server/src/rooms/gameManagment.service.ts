@@ -1,4 +1,4 @@
-import { IPlayer, IRole, PlayerActionResult } from '@myorg/shared';
+import { GameSettings, IPlayer, IRole, PlayerActionResult } from '@myorg/shared';
 import { Injectable } from '@nestjs/common';
 import { RoleService } from 'src/roles/role.service';
 
@@ -136,16 +136,32 @@ export class GameManagementService {
   }
 
 
-  async startGame(gameCode: string, players: IPlayer[]) {
+  async startGame(gameCode: string, players: IPlayer[], gameSettings?: GameSettings) {
     const roles = await this.roleService.list();
+    const settings: GameSettings = gameSettings ??
+      { roleCountDict: { Villager: 2, Werewolf: 2 } };
 
-    // Shuffle roles
-    const shuffledRoles = [...roles].sort(() => Math.random() - 0.5);
+    let rolePool: IRole[] = [];
+    Object.entries(settings.roleCountDict).forEach(([roleName, count]) => {
+      const roleObj = roles.find(r => r.name === roleName);
+      if (roleObj) {
+        for (let i = 0; i < count; i++) rolePool.push(roleObj);
+      }
+    });
 
-    // Take 3 roles out (these will NOT be given to players)
-    const centerRoles = shuffledRoles.splice(0, 3);
+    const centerCardsCount = 3;
+    const totalNeeded = players.length + centerCardsCount;
+    const extraRoles = roles.filter(r => !(r.name in settings.roleCountDict));
 
-    // Assign the remaining shuffled roles to players (1 per player, no repeats)
+    let extraIndex = 0;
+    while (rolePool.length < totalNeeded) {
+      rolePool.push(extraRoles[extraIndex % extraRoles.length]);
+      extraIndex++;
+    }
+
+    const shuffledRoles = [...rolePool].sort(() => Math.random() - 0.5);
+    const centerRoles = shuffledRoles.splice(0, centerCardsCount);
+
     const playersWithRoles = players.map((player, index) => {
       const assignedRole = shuffledRoles[index] ?? null;
       return {
@@ -156,7 +172,6 @@ export class GameManagementService {
       };
     });
 
-    // Sort players by nightOrder of their assigned role
     const sortedPlayers = playersWithRoles.sort((a, b) => {
       const aOrder = a.currentRole?.nightOrder ?? Infinity;
       const bOrder = b.currentRole?.nightOrder ?? Infinity;
@@ -169,9 +184,12 @@ export class GameManagementService {
       centerRoles,
       usedRoleIds: new Set(),
     };
+
     this.games.set(gameCode, gameState);
     return sortedPlayers;
   }
+
+
 
   handlePlayerAction(gameCode: string, playerId: string, targetsIds: string[]): PlayerActionResult {
     const game = this.games.get(gameCode);
