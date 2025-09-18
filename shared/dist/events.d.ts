@@ -13,7 +13,6 @@ export declare enum RoomEvents {
     StartGame = "startGame",
     EndGame = "endGame",
     GameStarted = "gameStarted",
-    GameEnded = "gameEnded",
     Error = "error"
 }
 export declare enum ChatEvents {
@@ -30,5 +29,7 @@ export declare enum GameEvents {
     GetCurrentTurn = "getCurrentTurn",
     PlayerAction = "playerAction",
     PlayerActionInfo = "playerActionInfo",
-    NightIsOver = "nightIsOver"
+    NightIsOver = "nightIsOver",
+    GameIsOver = "gameIsOver",
+    VotingTimer = "votingTimer"
 }

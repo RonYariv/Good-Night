@@ -34,6 +34,7 @@ export class RoomGateway
 
   private roomIdToMessages: Map<string, IChatMessage[]> = new Map();
   private maxHistoryPerRoom = 100;
+  private votingDurationSeconds = 300;
 
   afterInit(nameSpace: Namespace) {
     instrument(nameSpace.server, {
@@ -41,6 +42,25 @@ export class RoomGateway
       mode: 'production',
     });
   }
+
+  private startEndOfNightTimer(gameCode: string, seconds: number) {
+    const game = this.gameManagmentService.getGameByCode(gameCode);
+    if (!game) return;
+
+    let remaining = seconds;
+
+    const interval = setInterval(() => {
+      remaining--;
+
+      this.server.to(gameCode).emit(GameEvents.VotingTimer, { remainingSeconds: remaining });
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        this.server.to(gameCode).emit(GameEvents.GameIsOver);
+      }
+    }, 1000);
+  }
+
 
   // Connection handling
   handleConnection(client: Socket) {
@@ -218,6 +238,7 @@ export class RoomGateway
 
     if (!nextRole) {
       this.server.to(gameCode).emit(GameEvents.NightIsOver);
+      this.startEndOfNightTimer(gameCode, this.votingDurationSeconds);
       return;
     }
 
@@ -263,14 +284,13 @@ export class RoomGateway
     }
   }
 
-  @SubscribeMessage(RoomEvents.EndGame)
+  @SubscribeMessage(GameEvents.GameIsOver)
   async handleEndGame(
     @MessageBody() data: { roomId: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
       const room = this.roomService.updateRoomStatus(data.roomId, 'finished');
-      this.server.to(data.roomId).emit(RoomEvents.GameEnded, room);
       this.server.emit(RoomEvents.RoomListUpdated);
       return { success: true, room };
     } catch (error: any) {

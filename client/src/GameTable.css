@@ -55,7 +55,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .card-placeholder.selected {
@@ -71,13 +71,6 @@
   color: #fff;
   font-weight: bold;
   font-size: 14px;
-  opacity: 0;
-  animation: fadeIn 3s forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .turn-text {
@@ -104,4 +97,29 @@
 .done-button:disabled {
   background: #666;
   cursor: not-allowed;
+}
+
+.timer-container {
+  display: flex;
+  justify-content: center;
+  margin: 8px;
+}
+
+.timer-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid #ffcc00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  font-weight: bold;
+}
+
+.timer-text {
+  font-size: 1.2rem;
+  color: #fff;
+  font-family: 'Arial', sans-serif;
 }

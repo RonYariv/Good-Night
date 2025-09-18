@@ -13,7 +13,6 @@ export enum RoomEvents {
   StartGame = 'startGame',
   EndGame = 'endGame',
   GameStarted = 'gameStarted',
-  GameEnded = 'gameEnded',
   Error = 'error',
 }
 
@@ -33,4 +32,6 @@ export enum GameEvents {
   PlayerAction = 'playerAction',
   PlayerActionInfo = 'playerActionInfo',
   NightIsOver = 'nightIsOver',
+  GameIsOver = 'gameIsOver',
+  VotingTimer = 'votingTimer',
 }

@@ -15,6 +15,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [currentTurnRole, setCurrentTurnRole] = useState<IRole | null>(null);
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [nightOver, setNightOver] = useState(false);
+  const [timer, setVotingTimer] = useState(0);
 
   const currentPlayer = useMemo(
     () => players.find(p => p.id === playerId),
@@ -104,6 +105,11 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
           }
         },
       ],
+      [
+        GameEvents.VotingTimer, (data: { remainingSeconds: number }) => {
+          setVotingTimer(data.remainingSeconds);
+        },
+      ]
     ];
 
     handlers.forEach(([event, fn]) => socketService.on(event, fn));
@@ -189,11 +195,29 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     );
   };
 
+  function formatTime(seconds: number) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+
   return (
     <div className="table-container">
-      <div className="turn-text">
-        {nightOver ? "Good morning!" : currentTurnRole?.name + " wake up"}
+      <div className="turn-text-container">
+        <div className="turn-text">
+          {nightOver ? "Good morning!" : currentTurnRole?.name + " wake up"}
+        </div>
+
+        {nightOver && timer > 0 && (
+          <div className="timer-container">
+            <div className="timer-circle">
+              <span className="timer-text">{formatTime(timer)}</span>
+            </div>
+          </div>
+        )}
       </div>
+
 
       <div className="table">
         <div className="community-cards">
