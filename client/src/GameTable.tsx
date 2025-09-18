@@ -16,6 +16,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [nightOver, setNightOver] = useState(false);
   const [timer, setVotingTimer] = useState(0);
+  const [roleList, setRoleList] = useState<IRole[]>([]);
 
   const currentPlayer = useMemo(
     () => players.find(p => p.id === playerId),
@@ -58,14 +59,16 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     const handlers: [string, (...args: any[]) => void][] = [
       [
         GameEvents.RevealRoles,
-        (data: { roles: { playerId: string; role: IRole }[] }) => {
-          const myRole = data.roles?.find(r => r.playerId === playerId)?.role;
+        (data: { roles: { id: string; role: IRole }[] }) => {
+          console.log("Received roles:", data.roles);
+          const myRole = data.roles?.find(r => r.id === playerId)?.role;
+          setRoleList(data.roles?.map(r => r.role));
           if (myRole) setRevealedRole(myRole);
           if (myRole?.canSeeTeammates) {
-            const teamMates = data.roles.filter(r => r.role.id === myRole.id && r.playerId !== playerId);
+            const teamMates = data.roles.filter(r => r.role.id === myRole.id && r.id !== playerId);
             const teamMap: Record<string, IRole> = {};
             for (const mate of teamMates) {
-              teamMap[mate.playerId] = mate.role;
+              teamMap[mate.id] = mate.role;
             }
 
             setKnownRolesMap(prev => ({ ...prev, ...teamMap }));
@@ -203,13 +206,13 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
 
   return (
-    <div className="table-container">
+    <div className="game-container">
       <div className="turn-text-container">
         <div className="turn-text">
           {nightOver ? "Good morning!" : currentTurnRole?.name + " wake up"}
         </div>
 
-        {nightOver && timer > 0 && (
+        {nightOver && (
           <div className="timer-container">
             <div className="timer-circle">
               <span className="timer-text">{formatTime(timer)}</span>
@@ -218,32 +221,43 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         )}
       </div>
 
+      <div className="table-container">
 
-      <div className="table">
-        <div className="community-cards">
-          {Array.from({ length: 3 }).map((_, i) => renderCenterCard(i))}
+        <div className="role-list">
+          {roleList.map((role, i) => (
+            <div key={i} className="role-item">
+              {role.name}
+            </div>
+          ))}
         </div>
 
-        {currentPlayer && (
-          <div className="player-slot player-self">
-            <div className="player-name">{currentPlayer.name}</div>
-            {renderPlayerCard(currentPlayer)}
+        <div className="table">
+          <div className="community-cards">
+            {Array.from({ length: 3 }).map((_, i) => renderCenterCard(i))}
           </div>
-        )}
 
-        {otherPlayers.map((player, i) => {
-          const { x, y } = getPosition(i);
-          return (
-            <div
-              key={player.id}
-              className="player-slot"
-              style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
-            >
-              <div className="player-name">{player.name}</div>
-              {renderPlayerCard(player)}
+          {currentPlayer && (
+            <div className="player-slot player-self">
+              <div className="player-name">{currentPlayer.name}</div>
+              {renderPlayerCard(currentPlayer)}
             </div>
-          );
-        })}
+          )}
+
+          {otherPlayers.map((player, i) => {
+            const { x, y } = getPosition(i);
+            return (
+              <div
+                key={player.id}
+                className="player-slot"
+                style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
+              >
+                <div className="player-name">{player.name}</div>
+                {renderPlayerCard(player)}
+              </div>
+            );
+          })}
+        </div>
+
       </div>
 
       {

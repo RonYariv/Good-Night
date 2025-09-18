@@ -34,7 +34,7 @@ export class RoomGateway
 
   private roomIdToMessages: Map<string, IChatMessage[]> = new Map();
   private maxHistoryPerRoom = 100;
-  private votingDurationSeconds = 300;
+  private votingDurationSeconds = 60;
 
   afterInit(nameSpace: Namespace) {
     instrument(nameSpace.server, {
@@ -178,7 +178,7 @@ export class RoomGateway
       this.server.emit(RoomEvents.RoomListUpdated);
 
       // 3. Start game logic
-      const playersWithRoles: IPlayer[] = await this.gameManagmentService.startGame(data.gameCode, room.players);
+      const roles = await this.gameManagmentService.startGame(data.gameCode, room.players);
 
       // 4. Emit current turn
       const currentRole = this.gameManagmentService.getRoleTurnByRoomId(data.gameCode);
@@ -189,11 +189,7 @@ export class RoomGateway
       this.server.to(data.gameCode).emit(GameEvents.CurrentRoleTurn, currentRole);
 
       // 5. Emit all roles
-      const rolesData = playersWithRoles.map(p => ({
-        playerId: p.id,
-        role: p.roleHistory[0],
-      }));
-      this.server.to(data.gameCode).emit(GameEvents.RevealRoles, { roles: rolesData });
+      this.server.to(data.gameCode).emit(GameEvents.RevealRoles, { roles});
 
       return { success: true, room };
     } catch (error: any) {
@@ -211,12 +207,8 @@ export class RoomGateway
     try {
       client.join(data.gameCode);
 
-      const game = this.gameManagmentService.getGameByCode(data.gameCode);
-      const rolesData = game?.players.map(p => ({
-        playerId: p.id,
-        role: p.roleHistory[0],
-      }));
-      client.emit(GameEvents.RevealRoles, { roles: rolesData });
+      const roles = this.gameManagmentService.roleListByGameCode(data.gameCode);
+      client.emit(GameEvents.RevealRoles, { roles });
 
       const currentRole = this.gameManagmentService.getRoleTurnByRoomId(data.gameCode);
       if (!currentRole) {

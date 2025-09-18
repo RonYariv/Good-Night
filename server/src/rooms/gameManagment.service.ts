@@ -117,6 +117,12 @@ export class GameManagementService {
     return;
   }
 
+  roleListByGameCode(gameCode: string): { id: string, role: IRole }[] {
+    const game = this.games.get(gameCode);
+    if (!game) return [] as any;
+    return [...game.players.map(p => ({ id: p.id, role: p.roleHistory[0] })), ...game.virtualCenters];
+  }
+
   getGameByCode(gameCode: string): GameState | undefined {
     return this.games.get(gameCode);
   }
@@ -198,7 +204,7 @@ export class GameManagementService {
     };
 
     this.games.set(gameCode, gameState);
-    return sortedPlayers;
+    return this.roleListByGameCode(gameCode);
   }
 
 
