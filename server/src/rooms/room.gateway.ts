@@ -56,7 +56,13 @@ export class RoomGateway
 
       if (remaining <= 0) {
         clearInterval(interval);
-        this.server.to(gameCode).emit(GameEvents.GameIsOver);
+        const winners = this.gameManagmentService.getWinningPlayers(gameCode);
+        this.server.to(gameCode).emit(GameEvents.GameIsOver,
+          {
+            voteMap: game.voteMap,
+            winners,
+            roles: this.gameManagmentService.roleListByGameCode(gameCode)
+          });
       }
     }, 1000);
   }
@@ -189,7 +195,7 @@ export class RoomGateway
       this.server.to(data.gameCode).emit(GameEvents.CurrentRoleTurn, currentRole);
 
       // 5. Emit all roles
-      this.server.to(data.gameCode).emit(GameEvents.RevealRoles, { roles});
+      this.server.to(data.gameCode).emit(GameEvents.RevealRoles, { roles });
 
       return { success: true, room };
     } catch (error: any) {
@@ -290,6 +296,25 @@ export class RoomGateway
       return { success: false, error: error.message };
     }
   }
+
+  @SubscribeMessage(GameEvents.VotePlayer)
+  async handleVotePlayer(
+    @MessageBody() data: { gameCode: string; playerId: string; votedPlayerId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const { gameCode, playerId, votedPlayerId } = data;
+
+      const updatedVoteMap = this.gameManagmentService.votePlayer(gameCode, playerId, votedPlayerId);
+
+      return { success: true, voteMap: updatedVoteMap };
+    } catch (error: any) {
+      console.error(error);
+      client.emit(RoomEvents.Error, { message: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
 
   // Chat system
   @SubscribeMessage(ChatEvents.Send)

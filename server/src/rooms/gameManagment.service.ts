@@ -1,4 +1,4 @@
-import { GameSettings, IPlayer, IRole, PlayerActionResult } from '@myorg/shared';
+import { GameSettings, IPlayer, IRole, PlayerActionResult, WinCondition } from '@myorg/shared';
 import { Injectable } from '@nestjs/common';
 import { RoleService } from 'src/roles/role.service';
 
@@ -13,6 +13,7 @@ interface GameState {
   centerRoles: IRole[];
   virtualCenters: VirtualCenter[];
   usedRoleIds: Set<string>;
+  voteMap?: Record<string, string>;
 }
 
 @Injectable()
@@ -117,10 +118,27 @@ export class GameManagementService {
     return;
   }
 
-  roleListByGameCode(gameCode: string): { id: string, role: IRole }[] {
+  votePlayer(gameCode: string, playerId: string, votedPlayerId: string) {
+    const game = this.getGameByCode(gameCode);
+    if (!game) throw new Error("Game not found");
+
+    if (!game.voteMap) {
+      game.voteMap = {};
+    }
+
+    // update the vote
+    game.voteMap[playerId] = votedPlayerId;
+
+    return game.voteMap;
+  }
+
+
+  roleListByGameCode(gameCode: string): { id: string, role: IRole, roleHistory?: IRole[] }[] {
     const game = this.games.get(gameCode);
     if (!game) return [] as any;
-    return [...game.players.map(p => ({ id: p.id, role: p.roleHistory[0] })), ...game.virtualCenters];
+    return [...game.players
+      .map(p => ({ id: p.id, role: p.currentRole!, roleHistory: p.roleHistory })), ...game.virtualCenters]
+      .sort((a, b) => a.role.name.localeCompare(b.role.name));
   }
 
   getGameByCode(gameCode: string): GameState | undefined {
@@ -147,6 +165,71 @@ export class GameManagementService {
 
     return playerInitialRole.id === currentRole.id;
   }
+
+  getWinningPlayers(gameCode: string): string[] {
+    const game = this.games.get(gameCode);
+    if (!game) return [];
+
+    const { players, voteMap } = game;
+    if (!players || !voteMap) return [];
+
+    // 1. Count votes
+    const voteCounts: Record<string, number> = {};
+    for (const [voterId, votedId] of Object.entries(voteMap)) {
+      if (!votedId) continue;
+      voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
+    }
+
+    // 2. Find max votes
+    const maxVotes = Math.max(0, ...Object.values(voteCounts));
+    const deadPlayers = players.filter(p => voteCounts[p.id] === maxVotes);
+
+    // 3. Build winner set
+    let winners: string[] = [];
+
+    for (const player of players) {
+      const role = player.currentRole;
+      if (!role) continue;
+
+      switch (role.winCondition) {
+        case WinCondition.SOLO:
+          // Wins alone if he's alive and had this condition
+          if (!deadPlayers.some(dp => dp.id === player.id)) {
+            winners = [player.id]; // SOLO overrides everything
+            return winners;
+          }
+          break;
+
+        case WinCondition.STAYING_ALIVE:
+          // Wins if all players of the same role are alive
+          const sameRolePlayers = players.filter(p => p.currentRole?.id === role.id);
+          const allAlive = sameRolePlayers.every(
+            p => !deadPlayers.some(dp => dp.id === p.id)
+          );
+          if (allAlive) {
+            winners.push(player.id);
+          }
+          break;
+
+        case WinCondition.KILLING_EVIL:
+          // Wins if Werewolf is dead
+          const werewolves = players.filter(p => p.currentRole?.name === "Werewolf");
+          const werewolvesDead = werewolves.every(w =>
+            deadPlayers.some(dp => dp.id === w.id)
+          );
+          if (werewolvesDead) {
+            winners.push(player.id);
+          }
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    return winners;
+  }
+
 
   async startGame(gameCode: string, players: IPlayer[], gameSettings?: GameSettings) {
     const roles = await this.roleService.list();

@@ -34,4 +34,5 @@ export enum GameEvents {
   NightIsOver = 'nightIsOver',
   GameIsOver = 'gameIsOver',
   VotingTimer = 'votingTimer',
+  VotePlayer = 'votePlayer',
 }

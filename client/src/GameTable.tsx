@@ -2,6 +2,7 @@ import { GameEvents, type IPlayer, type IRole, type PlayerActionResult, TargetTy
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./GameTable.css";
 import { socketService } from "./services/socket.service";
+import { data } from "react-router-dom";
 
 interface GameTableProps {
   players: IPlayer[];
@@ -18,6 +19,8 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [timer, setVotingTimer] = useState(0);
   const [votedPlayerId, setVotedPlayerId] = useState<string | null>(null);
   const [roleList, setRoleList] = useState<IRole[]>([]);
+  const [winners, setWinners] = useState<string[]>([]);
+  const [isGameOver, setIsGameOver] = useState(false);
 
   const currentPlayer = useMemo(
     () => players.find(p => p.id === playerId),
@@ -112,6 +115,21 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         GameEvents.VotingTimer, (data: { remainingSeconds: number }) => {
           setVotingTimer(data.remainingSeconds);
         },
+      ],
+      [
+        GameEvents.GameIsOver,
+        (data: {
+          voteMap: Record<string, string>,
+          winners: string[],
+          roles: { id: string; role: IRole, roleHistory?: IRole[] }[]
+        }) => {
+          setKnownRolesMap(data.roles.reduce((acc, curr) => {
+            acc[curr.id] = curr.role;
+            return acc;
+          }, {} as Record<string, IRole>));
+          setWinners(players.filter(p => data.winners.includes(p.id)).map(p => p.name));
+          setIsGameOver(true);
+        },
       ]
     ];
 
@@ -126,14 +144,27 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
   const handleSelect = (targetId: string, targetType: TargetType) => {
     if (!currentTurnRole || !currentTurnRole.targetTypes.includes(targetType)) return;
-    setSelectedTargets(prev =>
-      prev.includes(targetId)
-        ? prev.filter(id => id !== targetId)
-        : prev.length < (currentTurnRole.maxTargets || 0)
-          ? [...prev, targetId]
-          : prev
-    );
+
+    setSelectedTargets(prev => {
+      // if only one target allowed → always replace
+      if ((currentTurnRole.maxTargets || 0) === 1) {
+        return [targetId];
+      }
+
+      // otherwise, allow multiple but replace if full
+      if (!prev.includes(targetId)) {
+        if (prev.length < (currentTurnRole.maxTargets || 0)) {
+          return [...prev, targetId];
+        } else {
+          // replace the oldest with the new one
+          return [...prev.slice(1), targetId];
+        }
+      }
+
+      return prev;
+    });
   };
+
 
   const handleDone = () => {
     if (!currentTurnRole) return;
@@ -184,14 +215,19 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     const roleToShow = player.id === playerId ? revealedRole : knownRolesMap[player.id];
 
     const handleClick = () => {
+      if(isGameOver) return;
       if (canAct) {
         // Night action
         handleSelect(player.id, targetType);
-      } else if (nightOver && player.id !== playerId) {
+      } else if (nightOver && player.id !== playerId && votedPlayerId !== player.id) {
         // Voting action
-        if (votedPlayerId !== player.id) {
-          setVotedPlayerId(player.id);
-        }
+        setVotedPlayerId(player.id);
+        socketService.emit(GameEvents.VotePlayer, {
+          gameCode,
+          playerId,
+          votedPlayerId: player.id,
+        });
+
       }
     };
 
@@ -243,8 +279,13 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
                 <span className="timer-text">{formatTime(timer)}</span>
               </div>
             </div>
-            <div className="vote-text">Vote before time runs out!</div>
-          </>
+            {!isGameOver ? (
+              <div className="vote-text">Vote before time runs out!</div>
+            ) : (
+              <div className="vote-text">
+                Winners: {winners.join(", ")}
+              </div>
+            )}          </>
         )}
 
       </div>
