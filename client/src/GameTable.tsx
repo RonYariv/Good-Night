@@ -16,6 +16,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [nightOver, setNightOver] = useState(false);
   const [timer, setVotingTimer] = useState(0);
+  const [votedPlayerId, setVotedPlayerId] = useState<string | null>(null);
   const [roleList, setRoleList] = useState<IRole[]>([]);
 
   const currentPlayer = useMemo(
@@ -60,7 +61,6 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
       [
         GameEvents.RevealRoles,
         (data: { roles: { id: string; role: IRole }[] }) => {
-          console.log("Received roles:", data.roles);
           const myRole = data.roles?.find(r => r.id === playerId)?.role;
           setRoleList(data.roles?.map(r => r.role));
           if (myRole) setRevealedRole(myRole);
@@ -148,20 +148,23 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const canAct = !nightOver && currentTurnRole?.id === revealedRole?.id;
   const isValidSelection = selectedTargets.length === (currentTurnRole?.maxTargets || 0);
 
+
+  type SelectionType = "" | "selected" | "voted";
+
   const Card = ({
     role,
-    isSelected,
+    selectionType,
     onClick,
   }: {
     role?: IRole;
-    isSelected: boolean;
+    selectionType: SelectionType;
     onClick: () => void;
   }) => (
     <div
       role="button"
       tabIndex={0}
-      aria-pressed={isSelected}
-      className={`card-placeholder ${isSelected ? "selected" : ""}`}
+      aria-pressed={selectionType !== ""}
+      className={`card-placeholder ${selectionType}`}
       onClick={onClick}
     >
       {role && <div className="role-text">{role.name}</div>}
@@ -169,19 +172,40 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   );
 
   const renderPlayerCard = (player: IPlayer) => {
-    const isSelected = selectedTargets.includes(player.id);
+    let selectionType: SelectionType = "";
+
+    if (selectedTargets.includes(player.id)) {
+      selectionType = "selected";
+    } else if (votedPlayerId === player.id) {
+      selectionType = "voted";
+    }
+
     const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
     const roleToShow = player.id === playerId ? revealedRole : knownRolesMap[player.id];
+
+    const handleClick = () => {
+      if (canAct) {
+        // Night action
+        handleSelect(player.id, targetType);
+      } else if (nightOver && player.id !== playerId) {
+        // Voting action
+        if (votedPlayerId !== player.id) {
+          setVotedPlayerId(player.id);
+        }
+      }
+    };
 
     return (
       <Card
         key={player.id}
         role={roleToShow!}
-        isSelected={isSelected}
-        onClick={() => canAct && handleSelect(player.id, targetType)}
+        selectionType={selectionType}
+        onClick={handleClick}
       />
     );
   };
+
+
 
   const renderCenterCard = (index: number) => {
     const cardId = `center-${index}`;
@@ -192,7 +216,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
       <Card
         key={cardId}
         role={roleToShow}
-        isSelected={isSelected}
+        selectionType={isSelected ? "selected" : ""}
         onClick={() => canAct && handleSelect(cardId, TargetType.Center)}
       />
     );
@@ -213,12 +237,16 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         </div>
 
         {nightOver && (
-          <div className="timer-container">
-            <div className="timer-circle">
-              <span className="timer-text">{formatTime(timer)}</span>
+          <>
+            <div className="timer-container">
+              <div className="timer-circle">
+                <span className="timer-text">{formatTime(timer)}</span>
+              </div>
             </div>
-          </div>
+            <div className="vote-text">Vote before time runs out!</div>
+          </>
         )}
+
       </div>
 
       <div className="table-container">

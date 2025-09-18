@@ -71,6 +71,11 @@
   box-shadow: 0 0 10px gold;
 }
 
+.card-placeholder.voted {
+  border-color: red;
+  box-shadow: 0 0 10px red;
+}
+
 .role-text {
   position: absolute;
   top: 50%;
@@ -160,4 +165,12 @@
 .role-item:hover {
   background: #505050; /* slightly lighter on hover */
   transform: translateX(3px); /* small movement for interaction feel */
+}
+
+.vote-text {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #fff;
 }
