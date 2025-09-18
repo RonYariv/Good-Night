@@ -21,6 +21,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const [roleList, setRoleList] = useState<IRole[]>([]);
   const [winners, setWinners] = useState<string[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [voteMap, setVoteMap] = useState<Record<string, string>>({});
 
   const currentPlayer = useMemo(
     () => players.find(p => p.id === playerId),
@@ -127,7 +128,9 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
             acc[curr.id] = curr.role;
             return acc;
           }, {} as Record<string, IRole>));
+          setRevealedRole(data.roles.find(r => r.id === playerId)?.role || null);
           setWinners(players.filter(p => data.winners.includes(p.id)).map(p => p.name));
+          setVoteMap(data.voteMap);
           setIsGameOver(true);
         },
       ]
@@ -176,6 +179,11 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     setSelectedTargets([]);
   };
 
+  const getPlayerNameById = (id: string) => {
+    const player = players.find(p => p.id === id);
+    return player ? player.name : id;
+  }
+
   const canAct = !nightOver && currentTurnRole?.id === revealedRole?.id;
   const isValidSelection = selectedTargets.length === (currentTurnRole?.maxTargets || 0);
 
@@ -215,7 +223,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     const roleToShow = player.id === playerId ? revealedRole : knownRolesMap[player.id];
 
     const handleClick = () => {
-      if(isGameOver) return;
+      if (isGameOver) return;
       if (canAct) {
         // Night action
         handleSelect(player.id, targetType);
@@ -307,6 +315,9 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
           {currentPlayer && (
             <div className="player-slot player-self">
+              {isGameOver &&
+                <div className="voted-player-name">{getPlayerNameById(voteMap[playerId])}</div>
+              }
               <div className="player-name">{currentPlayer.name}</div>
               {renderPlayerCard(currentPlayer)}
             </div>
@@ -320,6 +331,9 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
                 className="player-slot"
                 style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
               >
+                {isGameOver &&
+                <div className="voted-player-name">{getPlayerNameById(voteMap[player.id])}</div>
+              }
                 <div className="player-name">{player.name}</div>
                 {renderPlayerCard(player)}
               </div>

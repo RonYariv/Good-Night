@@ -193,8 +193,8 @@ export class GameManagementService {
 
       switch (role.winCondition) {
         case WinCondition.SOLO:
-          // Wins alone if he's alive and had this condition
-          if (!deadPlayers.some(dp => dp.id === player.id)) {
+          // Wins alone if he's dead
+          if (deadPlayers.some(dp => dp.id === player.id)) {
             winners = [player.id]; // SOLO overrides everything
             return winners;
           }
