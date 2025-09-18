@@ -1,6 +1,7 @@
-import { GameEvents, type IPlayer, type IRole, type PlayerActionResult, TargetType } from "@myorg/shared";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { GameEvents, type IPlayer, type IRole, TargetType } from "@myorg/shared";
+import { useMemo } from "react";
 import "./GameTable.css";
+import { useGameSocket } from "./hooks/useGameSocket";
 import { socketService } from "./services/socket.service";
 
 interface GameTableProps {
@@ -9,156 +10,65 @@ interface GameTableProps {
   gameCode: string;
 }
 
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export function GameTable({ players, playerId, gameCode }: GameTableProps) {
-  const [revealedRole, setRevealedRole] = useState<IRole | null>(null);
-  const [knownRolesMap, setKnownRolesMap] = useState<Record<string, IRole>>({});
-  const [currentTurnRole, setCurrentTurnRole] = useState<IRole | null>(null);
-  const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
-  const [nightOver, setNightOver] = useState(false);
-  const [timer, setVotingTimer] = useState(0);
+  const { state, dispatch } = useGameSocket(gameCode, playerId, players);
 
-  const currentPlayer = useMemo(
-    () => players.find(p => p.id === playerId),
-    [players, playerId]
-  );
+  const currentPlayer = useMemo(() => players.find(p => p.id === playerId), [players, playerId]);
+  const otherPlayers = useMemo(() => players.filter(p => p.id !== playerId), [players, playerId]);
 
-  const otherPlayers = useMemo(
-    () => players.filter(p => p.id !== playerId),
-    [players, playerId]
-  );
-
-  const getPosition = useCallback(
-    (index: number) => {
-      const totalPlayers = players.length;
-      if (totalPlayers === 3) {
-        if (index === 0) return { x: 15, y: 50 };
-        if (index === 1) return { x: 85, y: 50 };
-      }
-      if (totalPlayers === 4) {
-        switch (index) {
-          case 0: return { x: 15, y: 50 };
-          case 1: return { x: 85, y: 50 };
-          case 2: return { x: 50, y: 15 };
-        }
-      }
-      const angle = (2 * Math.PI * index) / (totalPlayers - 1) - Math.PI / 2;
-      const radius = 35;
-      return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle) };
-    },
-    [players.length]
-  );
-
-  useEffect(() => {
-    if (!socketService.socket) {
-      socketService.connect();
-    }
-
-    socketService.emit(GameEvents.GetCurrentTurn, { gameCode });
-
-    const handlers: [string, (...args: any[]) => void][] = [
-      [
-        GameEvents.RevealRoles,
-        (data: { roles: { playerId: string; role: IRole }[] }) => {
-          const myRole = data.roles?.find(r => r.playerId === playerId)?.role;
-          if (myRole) setRevealedRole(myRole);
-          if (myRole?.canSeeTeammates) {
-            const teamMates = data.roles.filter(r => r.role.id === myRole.id && r.playerId !== playerId);
-            const teamMap: Record<string, IRole> = {};
-            for (const mate of teamMates) {
-              teamMap[mate.playerId] = mate.role;
-            }
-
-            setKnownRolesMap(prev => ({ ...prev, ...teamMap }));
-          }
-        },
-      ],
-      [
-        GameEvents.CurrentRoleTurn,
-        (role: IRole) => {
-          setCurrentTurnRole(role);
-          setSelectedTargets([]);
-        },
-      ],
-      [
-        GameEvents.NightIsOver,
-        () => {
-          setNightOver(true);
-          setCurrentTurnRole(null);
-        },
-      ],
-      [
-        GameEvents.PlayerActionInfo,
-        (res: PlayerActionResult) => {
-          const { info, targetsIds } = res;
-
-          if (info?.seenRoles) {
-            const newSeenRoles: Record<string, IRole> = {};
-            info.seenRoles.forEach((role: IRole, index: number) => {
-              const targetId = targetsIds[index];
-              newSeenRoles[targetId] = role;
-            });
-            setKnownRolesMap(prev => ({ ...prev, ...newSeenRoles }));
-          }
-
-          if (info?.swappedRole) {
-            setRevealedRole(info.swappedRole);
-          }
-        },
-      ],
-      [
-        GameEvents.VotingTimer, (data: { remainingSeconds: number }) => {
-          setVotingTimer(data.remainingSeconds);
-        },
-      ]
-    ];
-
-    handlers.forEach(([event, fn]) => socketService.on(event, fn));
-
-    // Cleanup
-    return () => {
-      handlers.forEach(([event, fn]) => socketService.off(event, fn));
-    };
-  }, [playerId, gameCode]);
-
+  const canAct = !state.nightOver && state.currentTurnRole?.id === state.revealedRole?.id;
+  const isValidSelection = state.selectedTargets.length === (state.currentTurnRole?.maxTargets || 0);
 
   const handleSelect = (targetId: string, targetType: TargetType) => {
-    if (!currentTurnRole || !currentTurnRole.targetTypes.includes(targetType)) return;
-    setSelectedTargets(prev =>
-      prev.includes(targetId)
-        ? prev.filter(id => id !== targetId)
-        : prev.length < (currentTurnRole.maxTargets || 0)
-          ? [...prev, targetId]
-          : prev
-    );
+    if (!state.currentTurnRole || !state.currentTurnRole.targetTypes.includes(targetType)) return;
+
+    let newSelection = [...state.selectedTargets];
+    const maxTargets = state.currentTurnRole.maxTargets || 0;
+
+    if (maxTargets === 1) newSelection = [targetId];
+    else if (!newSelection.includes(targetId))
+      newSelection = newSelection.length < maxTargets ? [...newSelection, targetId] : [...newSelection.slice(1), targetId];
+
+    dispatch({ type: "SET_SELECTED_TARGETS", payload: newSelection });
   };
 
   const handleDone = () => {
-    if (!currentTurnRole) return;
+    if (!state.currentTurnRole) return;
+
     socketService.emit(GameEvents.PlayerAction, {
       gameCode,
       playerId,
-      targetsIds: selectedTargets,
+      targetsIds: state.selectedTargets,
     });
-    setSelectedTargets([]);
+
+    dispatch({ type: "SET_SELECTED_TARGETS", payload: [] });
   };
 
-  const canAct = !nightOver && currentTurnRole?.id === revealedRole?.id;
-  const isValidSelection = selectedTargets.length === (currentTurnRole?.maxTargets || 0);
+  const handleVote = (targetId: string) => {
+    socketService.emit(GameEvents.VotePlayer,
+      {
+        gameCode, playerId, votedPlayerId: targetId
 
-  const Card = ({
-    role,
-    isSelected,
-    onClick,
-  }: {
-    role?: IRole;
-    isSelected: boolean;
-    onClick: () => void;
-  }) => (
+      });
+    dispatch({ type: "SET_VOTED_PLAYER", payload: targetId });
+  }
+
+  const getPlayerNameById = (id: string) => players.find(p => p.id === id)?.name || id;
+
+  type SelectionType = "" | "selected" | "voted";
+
+  const Card = ({ role, selectionType, onClick }: { role?: IRole; selectionType: SelectionType; onClick: () => void }) => (
     <div
       role="button"
       tabIndex={0}
-      aria-pressed={isSelected}
-      className={`card-placeholder ${isSelected ? "selected" : ""}`}
+      aria-pressed={selectionType !== ""}
+      className={`card-placeholder ${selectionType}`}
       onClick={onClick}
     >
       {role && <div className="role-text">{role.name}</div>}
@@ -166,99 +76,123 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   );
 
   const renderPlayerCard = (player: IPlayer) => {
-    const isSelected = selectedTargets.includes(player.id);
-    const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
-    const roleToShow = player.id === playerId ? revealedRole : knownRolesMap[player.id];
+    let selectionType: SelectionType = "";
+    if (state.selectedTargets.includes(player.id)) selectionType = "selected";
+    else if (state.votedPlayerId === player.id) selectionType = "voted";
 
-    return (
-      <Card
-        key={player.id}
-        role={roleToShow!}
-        isSelected={isSelected}
-        onClick={() => canAct && handleSelect(player.id, targetType)}
-      />
-    );
+    const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
+    const roleToShow = player.id === playerId ? state.revealedRole : state.knownRolesMap[player.id];
+
+    const handleClick = () => {
+      if (state.isGameOver) return;
+      if (canAct) handleSelect(player.id, targetType);
+      else if (state.nightOver && player.id !== playerId && state.votedPlayerId !== player.id) {
+        handleVote(player.id);
+      }
+    };
+
+    return <Card key={player.id} role={roleToShow!} selectionType={selectionType} onClick={handleClick} />;
   };
 
   const renderCenterCard = (index: number) => {
     const cardId = `center-${index}`;
-    const isSelected = selectedTargets.includes(cardId);
-    const roleToShow = knownRolesMap[cardId];
+    const isSelected = state.selectedTargets.includes(cardId);
+    const roleToShow = state.knownRolesMap[cardId];
 
     return (
       <Card
         key={cardId}
         role={roleToShow}
-        isSelected={isSelected}
+        selectionType={isSelected ? "selected" : ""}
         onClick={() => canAct && handleSelect(cardId, TargetType.Center)}
       />
     );
   };
 
-  function formatTime(seconds: number) {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
-
+  const getPosition = (index: number) => {
+    const totalPlayers = otherPlayers.length + 1; // including self
+    if (totalPlayers === 3) {
+      if (index === 0) return { x: 15, y: 50 };
+      if (index === 1) return { x: 85, y: 50 };
+    }
+    if (totalPlayers === 4) {
+      switch (index) {
+        case 0:
+          return { x: 15, y: 50 };
+        case 1:
+          return { x: 85, y: 50 };
+        case 2:
+          return { x: 50, y: 15 };
+      }
+    }
+    const angle = (2 * Math.PI * index) / (totalPlayers - 1) - Math.PI / 2;
+    const radius = 35;
+    return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle) };
+  };
 
   return (
-    <div className="table-container">
+    <div className="game-container">
       <div className="turn-text-container">
-        <div className="turn-text">
-          {nightOver ? "Good morning!" : currentTurnRole?.name + " wake up"}
-        </div>
+        <div className="turn-text">{state.nightOver ? "Good morning!" : state.currentTurnRole?.name + " wake up"}</div>
 
-        {nightOver && timer > 0 && (
-          <div className="timer-container">
-            <div className="timer-circle">
-              <span className="timer-text">{formatTime(timer)}</span>
+        {state.nightOver && (
+          <>
+            <div className="timer-container">
+              <div className="timer-circle">
+                <span className="timer-text">{formatTime(state.timer)}</span>
+              </div>
             </div>
-          </div>
+            {!state.isGameOver ? (
+              <div className="vote-text">Vote before time runs out!</div>
+            ) : (
+              <div className="vote-text">
+                Winners: {state.winners.map(id => getPlayerNameById(id)).join(", ")}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-
-      <div className="table">
-        <div className="community-cards">
-          {Array.from({ length: 3 }).map((_, i) => renderCenterCard(i))}
+      <div className="table-container">
+        <div className="role-list">
+          {state.roleList.map((role, i) => (
+            <div key={i} className="role-item">
+              {role.name}
+            </div>
+          ))}
         </div>
 
-        {currentPlayer && (
-          <div className="player-slot player-self">
-            <div className="player-name">{currentPlayer.name}</div>
-            {renderPlayerCard(currentPlayer)}
-          </div>
-        )}
+        <div className="table">
+          <div className="community-cards">{Array.from({ length: 3 }).map((_, i) => renderCenterCard(i))}</div>
 
-        {otherPlayers.map((player, i) => {
-          const { x, y } = getPosition(i);
-          return (
-            <div
-              key={player.id}
-              className="player-slot"
-              style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
-            >
-              <div className="player-name">{player.name}</div>
-              {renderPlayerCard(player)}
+          {currentPlayer && (
+            <div className="player-slot player-self">
+              {state.isGameOver && <div className="voted-player-name">{getPlayerNameById(state.voteMap?.[playerId])}</div>}
+              <div className="player-name">{currentPlayer.name}</div>
+              {renderPlayerCard(currentPlayer)}
             </div>
-          );
-        })}
+          )}
+
+          {otherPlayers.map((player, i) => {
+            const { x, y } = getPosition(i);
+            return (
+              <div key={player.id} className="player-slot" style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}>
+                {state.isGameOver && <div className="voted-player-name">{getPlayerNameById(state.voteMap?.[player.id])}</div>}
+                <div className="player-name">{player.name}</div>
+                {renderPlayerCard(player)}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {
-        canAct && !nightOver && (
-          <div className="action-container">
-            <button
-              className="done-button"
-              onClick={handleDone}
-              disabled={!isValidSelection}
-            >
-              Done
-            </button>
-          </div>
-        )
-      }
-    </div >
+      {canAct && !state.nightOver && (
+        <div className="action-container">
+          <button className="done-button" onClick={handleDone} disabled={!isValidSelection}>
+            Done
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

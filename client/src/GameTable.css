@@ -1,4 +1,4 @@
-.table-container {
+.game-container {
   width: 100%;
   height: 100vh;
   display: flex;
@@ -6,6 +6,14 @@
   justify-content: center;
   align-items: center;
   background-color: #1e1e1e;
+}
+
+.table-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .table {
@@ -47,6 +55,13 @@
   font-size: 14px;
 }
 
+.voted-player-name{
+  color: red;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
 .card-placeholder {
   width: 80px;
   height: 120px;
@@ -56,11 +71,17 @@
   cursor: pointer;
   transition: 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
 }
 
 .card-placeholder.selected {
   border-color: gold;
   box-shadow: 0 0 10px gold;
+}
+
+.card-placeholder.voted {
+  border-color: red;
+  box-shadow: 0 0 10px red;
 }
 
 .role-text {
@@ -122,4 +143,42 @@
   font-size: 1.2rem;
   color: #fff;
   font-family: 'Arial', sans-serif;
+}
+
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px;
+  margin : 16px;
+  background-color: #2b2b2b; /* subtle dark card background */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* soft shadow for depth */
+  max-height: 70vh; /* optional: prevents overflowing if many roles */
+  overflow-y: auto; /* scroll if needed */
+  min-width: 160px;
+}
+
+.role-item {
+  background: #3c3c3c; /* dark gray card */
+  color: #f5f5f5; /* bright, readable text */
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); /* subtle depth */
+  cursor: default;
+}
+
+.role-item:hover {
+  background: #505050; /* slightly lighter on hover */
+  transform: translateX(3px); /* small movement for interaction feel */
+}
+
+.vote-text {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #fff;
 }

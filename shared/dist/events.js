@@ -35,4 +35,5 @@ export var GameEvents;
     GameEvents["NightIsOver"] = "nightIsOver";
     GameEvents["GameIsOver"] = "gameIsOver";
     GameEvents["VotingTimer"] = "votingTimer";
+    GameEvents["VotePlayer"] = "votePlayer";
 })(GameEvents || (GameEvents = {}));
