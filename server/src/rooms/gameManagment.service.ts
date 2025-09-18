@@ -2,10 +2,16 @@ import { GameSettings, IPlayer, IRole, PlayerActionResult } from '@myorg/shared'
 import { Injectable } from '@nestjs/common';
 import { RoleService } from 'src/roles/role.service';
 
+interface VirtualCenter {
+  id: string;
+  role: IRole;
+}
+
 interface GameState {
   currentPlayerIndex: number;
   players: IPlayer[];
   centerRoles: IRole[];
+  virtualCenters: VirtualCenter[];
   usedRoleIds: Set<string>;
 }
 
@@ -19,26 +25,28 @@ export class GameManagementService {
     const game = this.games.get(gameCode);
     if (!game) throw new Error('Game does not exist');
 
-    if (advance) {
-      game.currentPlayerIndex++;
-    }
+    if (advance) game.currentPlayerIndex++;
 
-    while (game.currentPlayerIndex < game.players.length) {
-      const currentPlayer = game.players[game.currentPlayerIndex];
-      const initialRole = currentPlayer.roleHistory[0];
+    const actors = [
+      ...game.players.map(p => ({ id: p.id, role: p.roleHistory[0] })),
+      ...game.virtualCenters.map(c => ({ id: c.id, role: c.role })),
+    ].sort((a, b) => (a.role?.nightOrder ?? Infinity) - (b.role?.nightOrder ?? Infinity));
 
-      if (initialRole && initialRole.nightOrder != null && !game.usedRoleIds.has(initialRole.id)) {
-        this.games.set(gameCode, game);
-        return initialRole;
+    while (game.currentPlayerIndex < actors.length) {
+      const actor = actors[game.currentPlayerIndex];
+      if (actor.role && actor.role.nightOrder != null && !game.usedRoleIds.has(actor.role.id)) {
+        return actor.role;
       }
-
       game.currentPlayerIndex++;
     }
 
     return null;
   }
 
-
+  isCenterRole(gameCode: string, roleId: string): boolean {
+    const game = this.games.get(gameCode)!;
+    return game.virtualCenters.some(vc => vc.role.id === roleId);
+  }
 
   private handleNoneAction(): PlayerActionResult['info'] {
     return {};
@@ -121,7 +129,6 @@ export class GameManagementService {
     return this._getRoleTurn(gameCode, true);
   }
 
-
   isYourTurn(gameCode: string, playerId: string) {
     const game = this.games.get(gameCode);
     if (!game) return false;
@@ -135,11 +142,10 @@ export class GameManagementService {
     return playerInitialRole.id === currentRole.id;
   }
 
-
   async startGame(gameCode: string, players: IPlayer[], gameSettings?: GameSettings) {
     const roles = await this.roleService.list();
     const settings: GameSettings = gameSettings ??
-      { roleCountDict: { Villager: 2, Werewolf: 2 } };
+      { roleCountDict: { Seer: 1, Werewolf: 2 } };
 
     let rolePool: IRole[] = [];
     Object.entries(settings.roleCountDict).forEach(([roleName, count]) => {
@@ -178,17 +184,22 @@ export class GameManagementService {
       return aOrder - bOrder;
     });
 
+    const virtualCenters: VirtualCenter[] = centerRoles.map((role, i) => ({
+      id: `center-${i}`,
+      role,
+    }));
+
     const gameState: GameState = {
       currentPlayerIndex: 0,
       players: sortedPlayers,
       centerRoles,
+      virtualCenters,
       usedRoleIds: new Set(),
     };
 
     this.games.set(gameCode, gameState);
     return sortedPlayers;
   }
-
 
 
   handlePlayerAction(gameCode: string, playerId: string, targetsIds: string[]): PlayerActionResult {
@@ -227,4 +238,24 @@ export class GameManagementService {
 
     return { gameCode, playerId, action: actionType, info, targetsIds };
   }
+
+  handleCenterAction(gameCode: string, center: VirtualCenter): PlayerActionResult {
+    const game = this.games.get(gameCode);
+    if (!game) throw new Error('Game not started or does not exist');
+
+    const originalRole = center.role;
+    if (!originalRole) throw new Error('Center role not found');
+
+    game.usedRoleIds.add(originalRole.id);
+    this.games.set(gameCode, game);
+
+    return {
+      gameCode,
+      playerId: center.id,
+      action: originalRole.actionType,
+      info: {},
+      targetsIds: [],
+    };
+  }
+
 }

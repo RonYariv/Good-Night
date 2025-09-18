@@ -1,3 +1,4 @@
+import { ChatEvents, GameEvents, IChatMessage, IPlayer, RoomEvents } from '@myorg/shared';
 import {
   ConnectedSocket,
   MessageBody,
@@ -10,7 +11,6 @@ import {
 } from '@nestjs/websockets';
 import { instrument } from '@socket.io/admin-ui';
 import { Namespace, Server, Socket } from 'socket.io';
-import { ChatEvents, RoomEvents, IChatMessage, GameEvents, IPlayer } from '@myorg/shared';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameManagementService } from './gameManagment.service';
 import { RoomService } from './room.service';
@@ -190,14 +190,14 @@ export class RoomGateway
   ) {
     try {
       client.join(data.gameCode);
-      
+
       const game = this.gameManagmentService.getGameByCode(data.gameCode);
       const rolesData = game?.players.map(p => ({
         playerId: p.id,
         role: p.roleHistory[0],
       }));
       client.emit(GameEvents.RevealRoles, { roles: rolesData });
-      
+
       const currentRole = this.gameManagmentService.getRoleTurnByRoomId(data.gameCode);
       if (!currentRole) {
         client.emit(GameEvents.NightIsOver);
@@ -213,7 +213,26 @@ export class RoomGateway
     }
   }
 
+  private handleNextTurn(gameCode: string) {
+    const nextRole = this.gameManagmentService.advanceRoleTurnByRoomId(gameCode);
 
+    if (!nextRole) {
+      this.server.to(gameCode).emit(GameEvents.NightIsOver);
+      return;
+    }
+
+    this.server.to(gameCode).emit(GameEvents.CurrentRoleTurn, nextRole);
+
+    // If it's a center role → wait 5–10s and auto-advance again
+    if (this.gameManagmentService.isCenterRole(gameCode, nextRole.id)) {
+      const delay = Math.floor(Math.random() * 5000) + 5000;
+      setTimeout(() => {
+        this.handleNextTurn(gameCode);
+      }, delay);
+      return;
+    }
+
+  }
 
   @SubscribeMessage(GameEvents.PlayerAction)
   async handlePlayerAction(
@@ -226,24 +245,19 @@ export class RoomGateway
         return { success: false, error: 'Not your turn' };
       }
 
-      const actionResult = this.gameManagmentService.handlePlayerAction(data.gameCode, data.playerId, data.targetsIds);
+      const actionResult = this.gameManagmentService.handlePlayerAction(
+        data.gameCode,
+        data.playerId,
+        data.targetsIds,
+      );
 
       client.emit(GameEvents.PlayerActionInfo, actionResult);
 
-      // Get the next player's turn after processing
-      const nextRole = this.gameManagmentService.advanceRoleTurnByRoomId(data.gameCode);
-
-      if (!nextRole) {
-        this.server.to(data.gameCode).emit(GameEvents.NightIsOver);
-        return { success: true };
-      }
-
-      // Broadcast current turn to all players in the room
-      this.server.to(data.gameCode).emit(GameEvents.CurrentRoleTurn, nextRole);
+      // Move to next role turn
+      this.handleNextTurn(data.gameCode);
 
       return { success: true };
     } catch (error: any) {
-      console.log(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }
