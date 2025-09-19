@@ -14,7 +14,8 @@
 
 .table-container {
   width: 90vmin;
-  height: 90vmin; /* perfect circle */
+  height: 90vmin;
+  /* perfect circle */
   max-width: 90vmin;
   max-height: 90vmin;
   display: flex;
@@ -60,9 +61,13 @@
 }
 
 .player-name {
-  color: #f0f0f0;
+  color: gold;
+  font-weight: 700;
+  font-size: 1.5vmin;
   margin-bottom: 0.5vmin;
-  font-size: 2vmin;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .voted-player-name {
