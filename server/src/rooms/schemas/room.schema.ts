@@ -19,7 +19,7 @@ export class Room {
   currentPlayers: number;
 
   @Prop({ default: 'waiting' })
-  status: 'waiting' | 'playing' | 'finished';
+  status: 'waiting' | 'playing' | 'finished' | 'closed';
 
   @Prop({ type: [PlayerSchema], default: [] })
   players: Player[];

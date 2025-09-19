@@ -34,7 +34,7 @@
   border-radius: 6px;
   border: 1px solid #444;
   color: #ddd;
-  user-select: all;
+  user-select: none;
 }
 
 .players-section {

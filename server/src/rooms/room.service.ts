@@ -50,8 +50,14 @@ export class RoomService {
   async joinRoom(roomId: string, playerName: string): Promise<{ room: Promise<RoomDocument>; id: string; }> {
     const room = await this.getRoomByGameCode(roomId);
 
-    if (room.status !== 'waiting') {
-      throw new BadRequestException('Game has already started');
+    if (room.status == 'closed') {
+      throw new BadRequestException('Room is closed');
+    }
+    if (room.status == 'playing') {
+      throw new BadRequestException('Game already started');
+    }
+    if (room.status == 'finished') {
+      throw new BadRequestException('Game already finished');
     }
 
     if (room.currentPlayers >= room.maxPlayers) {
@@ -73,29 +79,25 @@ export class RoomService {
 
     room.players = room.players.filter(player => player.id !== playerId);
     room.currentPlayers -= 1;
+    console.log(room.players);
+    console.log(room.currentPlayers);
 
     // If host leaves, assign new host or close room
-    if (room.host === playerId && room.players.length > 0) {
+    if (room.host === playerId && room.currentPlayers > 0) {
       room.host = room.players[0].id;
     }
 
     // If no players left, update to finished
-    if (room.players.length === 0) {
-      await this.roomModel.findByIdAndUpdate(
-        roomId,
-        { status: "finished" },
-        { new: true }
-      );
-      return room;
+    if (room.currentPlayers === 0) {
+      room.status = 'closed';
     }
 
-
-    return room.save();
+    return await room.save();
   }
 
-  async updateRoomStatus(roomId: string, status: RoomStatus, playerId?:string): Promise<RoomDocument> {
+  async updateRoomStatus(roomId: string, status: RoomStatus, playerId?: string): Promise<RoomDocument> {
     const room = await this.getRoomByGameCode(roomId);
-    if(playerId && room.host !== playerId) {
+    if (playerId && room.host !== playerId) {
       throw new BadRequestException('Only the host can start the game');
     }
     room.status = status;
