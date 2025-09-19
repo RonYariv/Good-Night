@@ -166,6 +166,7 @@ export function RoomPage() {
           onClick={startGame}
           disabled={room.players.length < 3 || playerId !== room.host}
           className="btn"
+          title="At least 3 players required to start"
         >
           Start Game
         </button>

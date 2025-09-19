@@ -1,3 +1,3 @@
 export interface GameSettings {
-  roleCountDict: Record<string, number>; // roleName -> count
+  roleCountDict: Record<string, { count: number, must: number }>;
 }

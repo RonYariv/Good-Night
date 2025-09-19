@@ -118,6 +118,74 @@ export class GameManagementService {
     return;
   }
 
+  private buildRolePool(settings: GameSettings, roles: IRole[]) {
+    const rolePool: IRole[] = [];
+    const mustAssignments: IRole[] = [];
+
+    for (const [roleName, cfg] of Object.entries(settings.roleCountDict)) {
+      const roleObj = roles.find(r => r.name === roleName);
+      if (!roleObj) continue;
+
+      // Add total count
+      rolePool.push(...Array(cfg.count).fill(roleObj));
+
+      // Track must roles separately
+      mustAssignments.push(...Array(cfg.must ?? 0).fill(roleObj));
+    }
+
+    return { rolePool, mustAssignments };
+  }
+
+  private fillPool(rolePool: IRole[], totalNeeded: number, settings: GameSettings, roles: IRole[]) {
+    const extraRoles = roles.filter(r => !(r.name in settings.roleCountDict));
+    const fallback = extraRoles.length > 0 ? extraRoles : roles;
+
+    let extraIndex = 0;
+    while (rolePool.length < totalNeeded) {
+      rolePool.push(fallback[extraIndex % fallback.length]);
+      extraIndex++;
+    }
+  }
+
+  private assignRoles(playersCount: number, shuffledPool: IRole[], mustAssignments: IRole[]) {
+    const assignedRoles: (IRole | null)[] = Array(playersCount).fill(null);
+
+    const mustCount = Math.min(mustAssignments.length, playersCount);
+    const mustRoles = this.shuffle([...mustAssignments]).slice(0, mustCount);
+    const mustIndices = this.sampleIndices(playersCount, mustCount);
+
+    // Place must roles
+    mustRoles.forEach((role, i) => {
+      assignedRoles[mustIndices[i]] = role;
+      // Remove one instance from pool to avoid duplication
+      const idx = shuffledPool.findIndex(r => r.name === role.name);
+      if (idx !== -1) shuffledPool.splice(idx, 1);
+    });
+
+    // Fill remaining spots
+    let poolPtr = 0;
+    for (let i = 0; i < playersCount; i++) {
+      if (!assignedRoles[i]) {
+        assignedRoles[i] = shuffledPool[poolPtr++] ?? null;
+      }
+    }
+
+    return assignedRoles;
+  }
+
+  private shuffle<T>(arr: T[]) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  private sampleIndices(total: number, k: number) {
+    const idx = Array.from({ length: total }, (_, i) => i);
+    return this.shuffle(idx).slice(0, k);
+  }
+
   votePlayer(gameCode: string, playerId: string, votedPlayerId: string) {
     const game = this.getGameByCode(gameCode);
     if (!game) throw new Error("Game not found");
@@ -230,49 +298,48 @@ export class GameManagementService {
     return winners;
   }
 
-
   async startGame(gameCode: string, players: IPlayer[], gameSettings?: GameSettings) {
     const roles = await this.roleService.list();
-    const settings: GameSettings = gameSettings ??
-      { roleCountDict: { Seer: 1, Werewolf: 2 } };
 
-    let rolePool: IRole[] = [];
-    Object.entries(settings.roleCountDict).forEach(([roleName, count]) => {
-      const roleObj = roles.find(r => r.name === roleName);
-      if (roleObj) {
-        for (let i = 0; i < count; i++) rolePool.push(roleObj);
-      }
-    });
+    const settings: GameSettings = gameSettings ?? {
+      roleCountDict: {
+        Seer: { count: 1, must: 0 },
+        Werewolf: { count: 2, must: 1 },
+      },
+    };
 
     const centerCardsCount = 3;
     const totalNeeded = players.length + centerCardsCount;
-    const extraRoles = roles.filter(r => !(r.name in settings.roleCountDict));
 
-    let extraIndex = 0;
-    while (rolePool.length < totalNeeded) {
-      rolePool.push(extraRoles[extraIndex % extraRoles.length]);
-      extraIndex++;
-    }
+    // Step 1: Build initial role pool + must assignments
+    const { rolePool, mustAssignments } = this.buildRolePool(settings, roles);
 
-    const shuffledRoles = [...rolePool].sort(() => Math.random() - 0.5);
-    const centerRoles = shuffledRoles.splice(0, centerCardsCount);
+    // Step 2: Ensure pool has enough roles (add fillers if needed)
+    this.fillPool(rolePool, totalNeeded, settings, roles);
 
-    const playersWithRoles = players.map((player, index) => {
-      const assignedRole = shuffledRoles[index] ?? null;
-      return {
-        ...player,
-        id: player.id,
-        currentRole: assignedRole,
-        roleHistory: assignedRole ? [assignedRole] : [],
-      };
-    });
+    // Step 3: Shuffle and separate center roles
+    const shuffledPool = this.shuffle([...rolePool]);
+    const centerRoles = shuffledPool.splice(0, centerCardsCount);
 
+    // Step 4: Assign must roles
+    const assignedRoles = this.assignRoles(players.length, shuffledPool, mustAssignments);
+
+    // Step 5: Map roles to players
+    const playersWithRoles = players.map((player, i) => ({
+      ...player,
+      id: player.id,
+      currentRole: assignedRoles[i],
+      roleHistory: assignedRoles[i] ? [assignedRoles[i]!] : [],
+    }));
+
+    // Step 6: Sort players by role night order
     const sortedPlayers = playersWithRoles.sort((a, b) => {
       const aOrder = a.currentRole?.nightOrder ?? Infinity;
       const bOrder = b.currentRole?.nightOrder ?? Infinity;
       return aOrder - bOrder;
     });
 
+    // Step 7: Build game state
     const virtualCenters: VirtualCenter[] = centerRoles.map((role, i) => ({
       id: `center-${i}`,
       role,

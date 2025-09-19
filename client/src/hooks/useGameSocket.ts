@@ -50,7 +50,6 @@ export function useGameSocket(gameCode: string, playerId: string, players: IPlay
       winners: string[],
       roles: { id: string; role: IRole, roleHistory?: IRole[] }[]
     }) => {
-      console.log("Game Over Data:", data);
       dispatch({ type: "SET_KNOWN_ROLES", payload: data.roles.reduce((acc, curr) => { acc[curr.id] = curr.role; return acc; }, {} as Record<string, IRole>) });
       dispatch({ type: "SET_REVEALED_ROLE", payload: data.roles.find(r => r.id === playerId)?.role || null });
       dispatch({ type: "SET_WINNERS", payload: data.winners });
