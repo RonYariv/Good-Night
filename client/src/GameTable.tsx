@@ -86,9 +86,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     const handleClick = () => {
       if (state.isGameOver) return;
       if (canAct) handleSelect(player.id, targetType);
-      else if (state.nightOver && player.id !== playerId && state.votedPlayerId !== player.id) {
-        handleVote(player.id);
-      }
+      else if (state.nightOver && player.id !== playerId && state.votedPlayerId !== player.id) handleVote(player.id);
     };
 
     return <Card key={player.id} role={roleToShow!} selectionType={selectionType} onClick={handleClick} />;
@@ -125,7 +123,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
           return { x: 50, y: 15 };
       }
     }
-    const angle = (2 * Math.PI * index) / (totalPlayers - 1) - Math.PI / 2;
+    const angle = (2 * Math.PI * index) / totalPlayers - Math.PI / 2;
     const radius = 35;
     return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle) };
   };
