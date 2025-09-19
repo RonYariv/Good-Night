@@ -3,37 +3,44 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   background-color: #1e1e1e;
+  padding: 1vmin;
+  box-sizing: border-box;
 }
 
 .table-container {
-  width: 100%;
-  height: 100%;
+  width: 90vmin;
+  height: 90vmin; /* perfect circle */
+  max-width: 90vmin;
+  max-height: 90vmin;
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .table {
-  position: relative;
-  width: 80vmin;
-  height: 80vmin;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   background-color: #2c2c2c;
   display: flex;
   justify-content: center;
   align-items: center;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  position: relative;
 }
 
 .community-cards {
   display: flex;
-  gap: 8px;
+  gap: 1vmin;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .player-slot {
@@ -41,6 +48,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-size: 2vmin;
 }
 
 .player-self {
@@ -51,37 +59,37 @@
 
 .player-name {
   color: #f0f0f0;
-  margin-bottom: 4px;
-  font-size: 14px;
+  margin-bottom: 0.5vmin;
+  font-size: 2vmin;
 }
 
-.voted-player-name{
+.voted-player-name {
   color: red;
-  margin-bottom: 4px;
-  font-size: 14px;
+  margin-bottom: 0.5vmin;
+  font-size: 2vmin;
   font-weight: bold;
 }
 
 .card-placeholder {
-  width: 80px;
-  height: 120px;
+  width: 8vmin;
+  height: 12vmin;
   background-color: #222;
-  border: 2px solid #555;
-  border-radius: 8px;
+  border: 0.3vmin solid #555;
+  border-radius: 1vmin;
   cursor: pointer;
   transition: 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0.5vmin 1vmin rgba(0, 0, 0, 0.5);
   position: relative;
 }
 
 .card-placeholder.selected {
   border-color: gold;
-  box-shadow: 0 0 10px gold;
+  box-shadow: 0 0 2vmin gold;
 }
 
 .card-placeholder.voted {
   border-color: red;
-  box-shadow: 0 0 10px red;
+  box-shadow: 0 0 2vmin red;
 }
 
 .role-text {
@@ -91,26 +99,27 @@
   transform: translate(-50%, -50%);
   color: #fff;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 1.5vmin;
+  text-align: center;
 }
 
 .turn-text {
   text-align: center;
-  font-size: 1.5rem;
+  font-size: 3vmin;
   font-weight: bold;
-  margin-bottom: 12px;
+  margin-bottom: 1vmin;
   color: #fff;
 }
 
 .done-button {
-  margin-top: 16px;
-  padding: 8px 20px;
-  font-size: 1.1rem;
+  margin-top: 1vmin;
+  padding: 1vmin 2vmin;
+  font-size: 2vmin;
   font-weight: bold;
   background: #444;
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 2vmin;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -123,62 +132,59 @@
 .timer-container {
   display: flex;
   justify-content: center;
-  margin: 8px;
+  margin: 1vmin;
 }
 
 .timer-circle {
-  width: 60px;
-  height: 60px;
+  width: 8vmin;
+  height: 8vmin;
   border-radius: 50%;
-  border: 4px solid #ffcc00;
+  border: 0.5vmin solid #ffcc00;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  box-shadow: 0 0 2vmin rgba(255, 204, 0, 0.5);
   font-weight: bold;
-}
-
-.timer-text {
-  font-size: 1.2rem;
+  font-size: 2vmin;
   color: #fff;
-  font-family: 'Arial', sans-serif;
 }
 
 .role-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 8px;
-  margin : 16px;
-  background-color: #2b2b2b; /* subtle dark card background */
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* soft shadow for depth */
-  max-height: 70vh; /* optional: prevents overflowing if many roles */
-  overflow-y: auto; /* scroll if needed */
-  min-width: 160px;
+  gap: 1vmin;
+  padding: 1vmin;
+  margin: 1vmin;
+  background-color: #2b2b2b;
+  border-radius: 2vmin;
+  box-shadow: 0 1vmin 2vmin rgba(0, 0, 0, 0.5);
+  max-height: 40vmin;
+  overflow-y: auto;
+  min-width: 20vmin;
+  width: 25vmin;
 }
 
 .role-item {
-  background: #3c3c3c; /* dark gray card */
-  color: #f5f5f5; /* bright, readable text */
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 1rem;
+  background: #3c3c3c;
+  color: #f5f5f5;
+  padding: 1vmin 1.5vmin;
+  border-radius: 1vmin;
+  font-size: 2vmin;
   font-weight: 500;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); /* subtle depth */
+  box-shadow: 0 0.5vmin 1vmin rgba(0, 0, 0, 0.4);
   cursor: default;
 }
 
 .role-item:hover {
-  background: #505050; /* slightly lighter on hover */
-  transform: translateX(3px); /* small movement for interaction feel */
+  background: #505050;
+  transform: translateX(0.5vmin);
 }
 
 .vote-text {
   text-align: center;
-  font-size: 1.2rem;
+  font-size: 2.5vmin;
   font-weight: bold;
-  margin-bottom: 12px;
+  margin-bottom: 1vmin;
   color: #fff;
 }

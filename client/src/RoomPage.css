@@ -1,8 +1,8 @@
 .room-container {
   width: 100%;
-  height: 92%;
-  margin: 3rem auto;
-  padding: 2rem;
+  min-height: 100vh;
+  margin: 1rem auto;
+  padding: 1rem;
   background-color: #1e1e1e;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
   color: #ccc;
@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .room-header {
@@ -17,35 +18,40 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .room-title {
-  font-size: 2.4rem;
+  font-size: clamp(1.5rem, 2vw, 2.4rem);
   font-weight: 600;
   color: #b0b0b0;
   letter-spacing: 1px;
 }
 
 .game-code {
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 1vw, 1.2rem);
   background-color: #2a2a2a;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   border: 1px solid #444;
   color: #ddd;
   user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .players-section {
   width: 100%;
-  max-width: 800px;
-  margin-bottom: 2rem;
+  max-width: 1000px;
+  margin-bottom: 1.5rem;
 }
 
 .section-title {
-  font-size: 1.4rem;
-  margin-bottom: 1rem;
+  font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+  margin-bottom: 0.8rem;
   color: #999;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -63,11 +69,12 @@
 }
 
 .player-item {
-  padding: 0.8rem 1rem;
+  padding: 0.6rem 0.8rem;
   border-bottom: 1px solid #333;
   color: #bbb;
   font-weight: 500;
   transition: background-color 0.3s ease;
+  font-size: clamp(0.9rem, 1vw, 1rem);
 }
 
 .player-item:last-child {
@@ -81,16 +88,18 @@
 
 .room-actions {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 }
 
 .btn {
-  padding: 0.8rem 1.5rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 8px;
   border: none;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1vw, 1rem);
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
@@ -104,13 +113,11 @@
 }
 
 .copy-text-btn {
-  margin-left: 8px;
   background: none;
   border: none;
   cursor: pointer;
   color: #ddd;
   font-size: 0.8rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: 600;
   padding: 0;
   user-select: none;
@@ -133,10 +140,10 @@
 }
 
 .btn-leave {
-  max-width: 100px;
   background-color: transparent;
-  color: #e57373; /* soft red */
+  color: #e57373;
   border: 1px solid #e57373;
+  max-width: 300px;
   padding: 0.3rem 0.6rem;
   font-size: 0.85rem;
   border-radius: 4px;
@@ -150,21 +157,24 @@
 }
 
 .chat-section {
-  width: 50%;
-  margin: 5px;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px 0;
   background: #555;
   border-radius: 10px;
-  padding: 15px;
+  padding: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-messages {
-  max-height: 250px;
   overflow-y: auto;
   padding: 10px;
   border: 1px solid #e2e2e2;
   border-radius: 8px;
   background-color: #fafafa;
+  max-height: 200px;
 }
 
 .chat-empty {
@@ -193,10 +203,12 @@
   display: flex;
   margin-top: 10px;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .chat-input-area input {
   flex: 1;
+  max-width: 200px;
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -207,4 +219,67 @@
   padding: 8px 14px;
   font-size: 14px;
   border-radius: 6px;
+}
+
+/* -------- Responsive Breakpoints -------- */
+@media (max-width: 768px) {
+  .room-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .room-title {
+    font-size: 1.8rem;
+  }
+
+  .game-code {
+    align-self: flex-start;
+  }
+
+  .chat-section {
+    width: 100%;
+    margin: 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .room-container {
+    padding: 0.8rem;
+  }
+
+  .room-title {
+    font-size: 1.5rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .game-code {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .players-section,
+  .room-actions {
+    width: 100%;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.7rem;
+    font-size: 0.9rem;
+  }
+
+  .chat-input-area {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .chat-input-area input {
+    width: 100%;
+  }
+
+  .chat-input-area .btn {
+    width: 100%;
+  }
 }
