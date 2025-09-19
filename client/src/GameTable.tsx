@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import "./GameTable.css";
 import { useGameSocket } from "./hooks/useGameSocket";
 import { socketService } from "./services/socket.service";
+import { useNavigate } from "react-router-dom";
 
 interface GameTableProps {
   players: IPlayer[];
@@ -18,6 +19,8 @@ function formatTime(seconds: number) {
 
 export function GameTable({ players, playerId, gameCode }: GameTableProps) {
   const { state, dispatch } = useGameSocket(gameCode, playerId, players);
+  const navigate = useNavigate();
+
 
   const currentPlayer = useMemo(() => players.find(p => p.id === playerId), [players, playerId]);
   const otherPlayers = useMemo(() => players.filter(p => p.id !== playerId), [players, playerId]);
@@ -137,7 +140,16 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
           <>
             <div className="timer-container">
               <div className="timer-circle">
-                <span className="timer-text">{formatTime(state.timer)}</span>
+                {!state.isGameOver ? (
+                  <span>{formatTime(state.timer)}</span>
+                ) : (
+                  <span
+                    className="timer-exit"
+                    onClick={() => navigate("/")}
+                  >
+                    Exit
+                  </span>
+                )}
               </div>
             </div>
             {!state.isGameOver ? (
