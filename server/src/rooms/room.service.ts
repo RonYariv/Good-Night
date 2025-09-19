@@ -79,8 +79,6 @@ export class RoomService {
 
     room.players = room.players.filter(player => player.id !== playerId);
     room.currentPlayers -= 1;
-    console.log(room.players);
-    console.log(room.currentPlayers);
 
     // If host leaves, assign new host or close room
     if (room.host === playerId && room.currentPlayers > 0) {

@@ -91,7 +91,7 @@ export class RoomGateway
       this.server.emit(RoomEvents.RoomListUpdated);
       return { success: true, room };
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }
@@ -116,7 +116,7 @@ export class RoomGateway
       this.server.emit(RoomEvents.RoomListUpdated);
       return { success: true, room };
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }
@@ -200,7 +200,7 @@ export class RoomGateway
 
       return { success: true, room };
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       client.emit(RoomEvents.Error, { message: error.message });
       return { success: false, error: error.message };
     }
