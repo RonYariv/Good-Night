@@ -1,14 +1,17 @@
-html, body, #root {
+html,
+body,
+#root {
+  --vh: 1vh; /* fallback */
   margin: 0;
   padding: 0;
-  height: 100%;
+  height: calc(var(--vh) * 100); /* use dynamic vh */
   width: 100%;
   background: transparent;
 }
 
 body {
-  background-color: transparent;
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: transparent;
 }
 
 #root {
