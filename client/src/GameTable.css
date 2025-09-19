@@ -195,3 +195,8 @@
   margin-bottom: 1vmin;
   color: #fff;
 }
+
+.timer-exit {
+  font-weight: bold;
+  cursor: pointer;
+}
