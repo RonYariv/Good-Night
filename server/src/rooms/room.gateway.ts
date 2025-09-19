@@ -56,6 +56,7 @@ export class RoomGateway
 
       if (remaining <= 0) {
         clearInterval(interval);
+        this.roomService.updateRoomStatus(gameCode, 'finished');
         const winners = this.gameManagmentService.getWinningPlayers(gameCode);
         this.server.to(gameCode).emit(GameEvents.GameIsOver,
           {
