@@ -1,5 +1,5 @@
 import { GameEvents, type IPlayer, type IRole, TargetType } from "@myorg/shared";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import "./GameTable.css";
 import { useGameSocket } from "./hooks/useGameSocket";
 import { socketService } from "./services/socket.service";
@@ -66,17 +66,40 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
 
   type SelectionType = "" | "selected" | "voted";
 
-  const Card = ({ role, selectionType, onClick }: { role?: IRole; selectionType: SelectionType; onClick: () => void }) => (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-pressed={selectionType !== ""}
-      className={`card-placeholder ${selectionType}`}
-      onClick={onClick}
-    >
-      {role && <div className="role-text">{role.name}</div>}
-    </div>
-  );
+  const Card = ({
+    role,
+    selectionType,
+    onClick,
+    roleHistory = []
+  }: {
+    role?: IRole;
+    selectionType: SelectionType;
+    onClick: () => void;
+    roleHistory?: IRole[];
+  }) => {
+    const [hover, setHover] = useState(false);
+
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        aria-pressed={selectionType !== ""}
+        className={`card-placeholder ${selectionType}`}
+        onClick={onClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+      >
+        {hover && roleHistory.length > 1 ? (
+          <div className="role-history-text">
+            {roleHistory.map(r => r.name).join(" → ")}
+          </div>
+        ) : (
+          role && <div className="role-text">{role.name}</div>
+        )}
+      </div>
+    );
+  };
+
 
   const renderPlayerCard = (player: IPlayer) => {
     let selectionType: SelectionType = "";
@@ -84,7 +107,8 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
     else if (state.votedPlayerId === player.id) selectionType = "voted";
 
     const targetType = player.id === playerId ? TargetType.Self : TargetType.Player;
-    const roleToShow = player.id === playerId ? state.revealedRole : state.knownRolesMap[player.id];
+    const roleToShow = player.id === playerId ? state.revealedRole : state.knownRolesMap[player.id]?.role;
+    const roleHistory = state.knownRolesMap[player.id]?.roleHistory || [];
 
     const handleClick = () => {
       if (state.isGameOver) return;
@@ -92,13 +116,14 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
       else if (state.nightOver && player.id !== playerId && state.votedPlayerId !== player.id) handleVote(player.id);
     };
 
-    return <Card key={player.id} role={roleToShow!} selectionType={selectionType} onClick={handleClick} />;
+    return <Card key={player.id} role={roleToShow!} selectionType={selectionType} onClick={handleClick} roleHistory={state.isGameOver ? roleHistory : []}
+    />;
   };
 
   const renderCenterCard = (index: number) => {
     const cardId = `center-${index}`;
     const isSelected = state.selectedTargets.includes(cardId);
-    const roleToShow = state.knownRolesMap[cardId];
+    const roleToShow = state.knownRolesMap[cardId]?.role;
 
     return (
       <Card

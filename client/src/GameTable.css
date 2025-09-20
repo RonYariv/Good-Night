@@ -89,6 +89,12 @@
   position: relative;
 }
 
+
+.card-placeholder:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .card-placeholder.selected {
   border-color: gold;
   box-shadow: 0 0 2vmin gold;
@@ -199,4 +205,21 @@
 .timer-exit {
   font-weight: bold;
   cursor: pointer;
+}
+
+.role-history-text {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1vmin;
+  color: white;
+  text-align: center;
+  line-height: 1.4;
+  padding: 4px 6px;
+  border-radius: 8px;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 90%;
 }
