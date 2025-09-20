@@ -89,7 +89,7 @@ export function GameTable({ players, playerId, gameCode }: GameTableProps) {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >
-        {hover && roleHistory.length > 0 ? (
+        {hover && roleHistory.length > 1 ? (
           <div className="role-history-text">
             {roleHistory.map(r => r.name).join(" → ")}
           </div>
